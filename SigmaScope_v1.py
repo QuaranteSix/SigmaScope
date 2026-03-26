@@ -5416,195 +5416,135 @@ elif current_page == t("page_explications"):
 
     GUIDE_SECTIONS = [
         {
-            "title": "📈 Indicateurs de Croissance",
+            "title": t("guide_growth_title"),
             "color": "green",
             "items": [
                 {
-                    "name": "Croissance du Chiffre d'Affaires (CA) — CAGR",
+                    "name": t("guide_rev_name"),
                     "formula": "CAGR = (CA_dernier / CA_premier) ^ (1/n) - 1",
-                    "body": (
-                        "Mesure la croissance annuelle moyenne des revenus sur la période analysée. "
-                        "Un CA en forte croissance indique une entreprise qui gagne des parts de marché "
-                        "ou opère dans un secteur porteur. Attention : une forte croissance du CA sans "
-                        "rentabilité associée peut signaler une entreprise qui 'brûle' du cash."
-                    ),
-                    "target": "> 10% par an",
+                    "body": t("guide_rev_body"),
+                    "target": t("guide_rev_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "< 0% : déclin | 0–5% : faible | 5–10% : correct | > 10% : fort | > 20% : exceptionnel",
+                    "interpretation": t("guide_rev_interp"),
                 },
                 {
-                    "name": "Croissance du Free Cash Flow (FCF) — CAGR",
+                    "name": t("guide_fcf_name"),
                     "formula": "CAGR FCF = (FCF_dernier / FCF_premier) ^ (1/n) - 1",
-                    "body": (
-                        "La croissance du FCF est souvent plus significative que celle du CA car le FCF "
-                        "représente l'argent réellement généré après investissements. Une entreprise dont "
-                        "le FCF croît plus vite que le CA améliore sa rentabilité. Indicateur favori des "
-                        "investisseurs value."
-                    ),
-                    "target": "> 10% par an",
+                    "body": t("guide_fcf_body"),
+                    "target": t("guide_fcf_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "Idéalement : FCF growth > CA growth (amélioration des marges)",
+                    "interpretation": t("guide_fcf_interp"),
                 },
             ],
         },
         {
-            "title": "💰 Indicateurs de Rentabilité",
+            "title": t("guide_profit_title"),
             "color": "blue",
             "items": [
                 {
-                    "name": "ROIC — Return On Invested Capital",
-                    "formula": "ROIC = EBIT / (Total Assets − Current Liabilities) × 100",
-                    "body": (
-                        "Mesure l'efficacité avec laquelle une entreprise utilise son capital pour générer "
-                        "des profits. Un ROIC durablement élevé (> 15%) indique un avantage concurrentiel "
-                        "solide (moat). Warren Buffett considère le ROIC comme l'un des indicateurs les "
-                        "plus importants pour évaluer la qualité d'une entreprise."
-                    ),
-                    "target": "> 15%",
+                    "name": t("guide_roic_name"),
+                    "formula": "ROIC = EBIT / (Total Assets - Current Liabilities) x 100",
+                    "body": t("guide_roic_body"),
+                    "target": t("guide_roic_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "< 8% : faible | 8–15% : correct | 15–25% : fort | > 25% : exceptionnel (moat)",
+                    "interpretation": t("guide_roic_interp"),
                 },
                 {
-                    "name": "ROE — Return On Equity",
-                    "formula": "ROE = Résultat Net / Capitaux Propres × 100",
-                    "body": (
-                        "Mesure la rentabilité des capitaux propres : combien de profit net l'entreprise "
-                        "génère pour chaque euro de capital investi par les actionnaires. "
-                        "Un ROE élevé et stable indique une entreprise capable de créer de la valeur "
-                        "pour ses actionnaires. À interpréter avec précaution si l'entreprise a un fort "
-                        "effet de levier (dette élevée), car le ROE peut être artificiellement gonflé."
-                    ),
-                    "target": "> 15%",
+                    "name": t("guide_roe_name"),
+                    "formula": "ROE = Net Income / Equity x 100",
+                    "body": t("guide_roe_body"),
+                    "target": t("guide_roe_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "< 10% : faible | 10–15% : correct | 15–25% : fort | > 25% : exceptionnel | Négatif : pertes",
+                    "interpretation": t("guide_roe_interp"),
                 },
                 {
-                    "name": "Marge de Free Cash Flow",
-                    "formula": "Marge FCF = Free Cash Flow / Chiffre d'Affaires × 100",
-                    "body": (
-                        "Pourcentage du CA qui se transforme en cash disponible après capex. "
-                        "Une marge FCF élevée indique une entreprise 'asset-light' peu gourmande "
-                        "en investissements. Les entreprises logicielles ont souvent des marges FCF > 30%, "
-                        "les industriels lourds < 5%."
-                    ),
-                    "target": "> 10%",
+                    "name": t("guide_fcfm_name"),
+                    "formula": "FCF Margin = Free Cash Flow / Revenue x 100",
+                    "body": t("guide_fcfm_body"),
+                    "target": t("guide_fcfm_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "< 5% : faible | 5–10% : correct | 10–20% : fort | > 20% : exceptionnel",
+                    "interpretation": t("guide_fcfm_interp"),
                 },
             ],
         },
         {
-            "title": "⚖️ Indicateurs de Valorisation",
+            "title": t("guide_valuation_title"),
             "color": "yellow",
             "items": [
                 {
-                    "name": "P/E Ratio — Price to Earnings",
-                    "formula": "P/E = Prix de l'action / Bénéfice par action (EPS)",
-                    "body": (
-                        "Combien d'années de bénéfices l'investisseur paie pour une action. "
-                        "Le P/E doit toujours être interprété en contexte : sectoriel, historique, "
-                        "et en regard de la croissance. Un P/E élevé n'est pas forcément cher "
-                        "pour une entreprise à forte croissance."
-                    ),
-                    "target": "Indicatif — dépend du secteur",
+                    "name": t("guide_pe_name"),
+                    "formula": "P/E = Price / EPS",
+                    "body": t("guide_pe_body"),
+                    "target": t("guide_pe_target"),
                     "tgt_cls": "tgt-yellow",
-                    "interpretation": "Secteur tech : 20–40x normal | Banques : 8–12x | Utilities : 12–18x",
+                    "interpretation": t("guide_pe_interp"),
                 },
                 {
-                    "name": "PEG Ratio — Price/Earnings to Growth",
-                    "formula": "PEG = P/E Ratio / Taux de croissance des bénéfices (%)",
-                    "body": (
-                        "Corrige le P/E par la croissance : un P/E de 30 avec 30% de croissance "
-                        "donne un PEG de 1, considéré comme juste. Inventé par Peter Lynch. "
-                        "Un PEG < 1 suggère une action sous-évaluée par rapport à sa croissance."
-                    ),
-                    "target": "< 2 (idéal < 1)",
+                    "name": t("guide_peg_name"),
+                    "formula": "PEG = P/E / Earnings Growth Rate (%)",
+                    "body": t("guide_peg_body"),
+                    "target": t("guide_peg_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "< 1 : potentiellement sous-évalué | 1–2 : juste prix | > 2 : cher par rapport à la croissance",
+                    "interpretation": t("guide_peg_interp"),
                 },
                 {
-                    "name": "Price / Book (P/B)",
-                    "formula": "P/B = Capitalisation boursière / Actif net comptable",
-                    "body": (
-                        "Compare la valeur de marché à la valeur comptable des actifs. "
-                        "Un P/B < 1 signifie que la bourse valorise l'entreprise en dessous de "
-                        "ses actifs nets (possible opportunité ou signe de difficultés)."
-                    ),
-                    "target": "< 5 (dépend du secteur)",
+                    "name": t("guide_pb_name"),
+                    "formula": "P/B = Market Cap / Net Book Value",
+                    "body": t("guide_pb_body"),
+                    "target": t("guide_pb_target"),
                     "tgt_cls": "tgt-yellow",
-                    "interpretation": "Banques : 0.5–1.5x normal | Tech : 5–20x possible | < 1 : décote sur actifs",
+                    "interpretation": t("guide_pb_interp"),
                 },
                 {
-                    "name": "Price / Free Cash Flow (P/FCF)",
-                    "formula": "P/FCF = Capitalisation boursière / Free Cash Flow annuel",
-                    "body": (
-                        "Version plus difficile à manipuler que le P/E car le FCF est moins "
-                        "sensible aux règles comptables. Indique combien l'investisseur paie "
-                        "pour 1€ de cash généré. Très utilisé par les investisseurs value."
-                    ),
-                    "target": "< 25",
-                    "tgt_cls": "tgt-green",
-                    "interpretation": "< 15 : attractif | 15–25 : correct | > 25 : cher | > 40 : très cher",
+                    "name": t("guide_pfcf_name"),
+                    "formula": "P/FCF = Market Cap / Free Cash Flow",
+                    "body": t("guide_pfcf_body"),
+                    "target": t("guide_pfcf_target"),
+                    "tgt_cls": "tgt-yellow",
+                    "interpretation": t("guide_pfcf_interp"),
                 },
             ],
         },
         {
-            "title": "🏦 Indicateurs de Solidité Financière",
+            "title": t("guide_solidity_title"),
             "color": "red",
             "items": [
                 {
-                    "name": "Dette Nette / Free Cash Flow",
-                    "formula": "Dette Nette / FCF = (Total Dette − Cash) / Free Cash Flow",
-                    "body": (
-                        "Mesure le nombre d'années nécessaires pour rembourser la dette nette "
-                        "avec le FCF généré. Un ratio < 3 indique une entreprise financièrement saine. "
-                        "Valeur négative = entreprise avec plus de cash que de dettes."
-                    ),
-                    "target": "< 3 ans",
+                    "name": t("guide_debt_name"),
+                    "formula": "Net Debt / FCF = (Total Debt - Cash) / Free Cash Flow",
+                    "body": t("guide_debt_body"),
+                    "target": t("guide_debt_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "< 0 : trésorerie nette positive | 0–3 : sain | 3–5 : vigilance | > 5 : risqué",
+                    "interpretation": t("guide_debt_interp"),
                 },
             ],
         },
         {
-            "title": "📐 Indicateurs Sigma (Position sur la Régression)",
+            "title": t("guide_sigma_title"),
             "color": "purple",
             "items": [
                 {
-                    "name": "Position σ (sigma)",
-                    "formula": "σ_pos = (log(Prix) − log(Régression)) / Écart-type des résidus",
-                    "body": (
-                        "Mesure l'écart du prix actuel par rapport à sa tendance logarithmique de long terme, "
-                        "exprimé en nombre d'écarts-types (sigma). La position sigma permet d'identifier "
-                        "si une action est statistiquement sur-achetée ou sur-vendue."
-                    ),
-                    "target": "Dépend de la stratégie",
+                    "name": t("guide_sigma_name"),
+                    "formula": "sigma_pos = (log(Price) - log(Regression)) / Std Dev",
+                    "body": t("guide_sigma_body"),
+                    "target": t("guide_sigma_target"),
                     "tgt_cls": "tgt-yellow",
-                    "interpretation": (
-                        "> +1.75σ : zone d'excès haut (surchauffe) | "
-                        "+0.75 à +1.25σ : tendance forte | "
-                        "-0.25 à +0.25σ : neutre | "
-                        "< -1.75σ : zone d'excès bas (soldes)"
-                    ),
+                    "interpretation": t("guide_sigma_interp"),
                 },
                 {
-                    "name": "Score Global (/10 — Grade A à F)",
-                    "formula": "Score = Σ(critères validés × pondération) / Σ(pondérations totales) × 10",
-                    "body": (
-                        "Note synthétique calculée sur 7 critères pondérés : "
-                        "Croissance CA (×2), Croissance FCF (×2), ROIC (×2), Marge FCF (×1), "
-                        "Dette/FCF (×1), PEG (×1), Price/Book (×1). "
-                        "A ≥ 8.5 | B ≥ 7.0 | C ≥ 5.5 | D ≥ 4.0 | F < 4.0."
-                    ),
-                    "target": "≥ 7/10 (grade B ou mieux)",
+                    "name": t("guide_score_name"),
+                    "formula": "Score = Sum(validated criteria x weight) / Sum(total weights) x 10",
+                    "body": t("guide_score_body"),
+                    "target": t("guide_score_target"),
                     "tgt_cls": "tgt-green",
-                    "interpretation": "Score élevé + position sigma basse = opportunité d'achat potentielle",
+                    "interpretation": t("guide_score_interp"),
                 },
             ],
         },
     ]
 
-    st.markdown("### 📊 Les Indicateurs de Scoring")
+    st.markdown(t("explain_scoring_title"))
+
 
     for section in GUIDE_SECTIONS:
         with st.expander(section['title'], expanded=False):
@@ -5617,38 +5557,23 @@ elif current_page == t("page_explications"):
                     f'<div class="guide-body">{item["body"]}</div>'
                     f'<div class="guide-body" style="margin-top:6px;color:#aaa;">'
                     f'📊 <em>{item["interpretation"]}</em></div>'
-                    f'<span class="guide-target {item["tgt_cls"]}">🎯 Objectif : {item["target"]}</span>'
+                    f'<span class="guide-target {item["tgt_cls"]}">{t("guide_target_lbl")} {item["target"]}</span>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
             st.markdown("")
 
     st.divider()
-    st.markdown("""
-    ### 💡 Stratégie combinée : Score + Sigma
-
-    L'approche la plus puissante de cet outil consiste à combiner **la qualité fondamentale** (Score global)
-    avec **le timing technique** (position sigma) :
-
-    | Score / Position sigma | Zone d'Excès Bas (-1.75σ) | Zone Neutre | Zone d'Excès Haut (+1.75σ) |
-    |---|---|---|---|
-    | **Score A/B** | 🟢 **Achat fort** — Qualité + Décote | 🟡 Surveiller | 🔴 Attendre correction |
-    | **Score C** | 🟡 Opportuniste | ⚪ Neutre | 🔴 Éviter |
-    | **Score D/F** | 🔴 Value trap possible | 🔴 Éviter | 🔴 Vendre |
-
-    > **Le screener multi-critères** permet d'automatiser cette combinaison sur un indice entier.
-    """)
+    st.markdown(t("guide_strategy_title") + "\n\n" + t("guide_strategy_body"))
+    st.markdown(t("guide_strategy_screener"))
 
     st.divider()
-    st.markdown("### 💰 Valorisation : Comment calculer le Prix Juste d'une Action ?")
-    st.markdown(
-        "Il n'existe pas de méthode universelle. Chaque approche repose sur des hypothèses différentes "
-        "et est adaptée à un type d'entreprise spécifique. Les grands investisseurs les combinent."
-    )
+    st.markdown(t("explain_valuation_title"))
+    st.markdown(t("explain_valuation_intro"))
     st.markdown("")
 
     # ── Méthode 1 — DCF ─────────────────────────────────────────
-    with st.expander("1️⃣  DCF — Discounted Cash Flow (Approche par les Flux)", expanded=False):
+    with st.expander(t("dcf_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card blue">'
             '<div class="guide-title">L\'approche par les flux de trésorerie actualisés</div>'
@@ -5694,7 +5619,7 @@ elif current_page == t("page_explications"):
         )
 
     # ── Méthode 2 — Multiples ────────────────────────────────────
-    with st.expander("2️⃣  Multiples de Marché — Approche Comparative (Relative)", expanded=False):
+    with st.expander(t("multiples_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card yellow">'
             '<div class="guide-title">Évaluation par comparaison aux pairs</div>'
@@ -5740,7 +5665,7 @@ elif current_page == t("page_explications"):
         )
 
     # ── Méthode 3 — Gordon-Shapiro ───────────────────────────────
-    with st.expander("3️⃣  Gordon-Shapiro — DDM (Approche par les Dividendes)", expanded=False):
+    with st.expander(t("gordon_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card green">'
             '<div class="guide-title">Le Dividend Discount Model (DDM)</div>'
@@ -5789,7 +5714,7 @@ elif current_page == t("page_explications"):
         )
 
     # ── Méthode 4 — ANR ─────────────────────────────────────────
-    with st.expander("4️⃣  ANR — Actif Net Réévalué (Approche Patrimoniale)", expanded=False):
+    with st.expander(t("anr_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card red">'
             '<div class="guide-title">La valeur du patrimoine net réel</div>'
@@ -5868,10 +5793,10 @@ elif current_page == t("page_explications"):
     )
 
     st.divider()
-    st.markdown("### ⚙️ Guide des Paramètres de Valorisation")
-    st.markdown("Comment calibrer les hypothèses clés pour chaque méthode, et comprendre leur sensibilité.")
+    st.markdown(t("explain_params_title"))
+    st.markdown(t("explain_params_intro"))
 
-    with st.expander("📐 WACC — Taux d'Actualisation (DCF uniquement)", expanded=False):
+    with st.expander(t("wacc_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card blue">'
             '<div class="guide-title">Weighted Average Cost of Capital (WACC)</div>'
@@ -5911,7 +5836,7 @@ elif current_page == t("page_explications"):
             unsafe_allow_html=True
         )
 
-    with st.expander("🌱 g — Taux de Croissance Perpétuel (DCF uniquement)", expanded=False):
+    with st.expander(t("g_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card green">'
             '<div class="guide-title">Taux de croissance terminal (valeur terminale)</div>'
@@ -5944,7 +5869,7 @@ elif current_page == t("page_explications"):
             unsafe_allow_html=True
         )
 
-    with st.expander("💰 k — Rendement Exigé Gordon-Shapiro (DDM uniquement)", expanded=False):
+    with st.expander(t("k_gordon_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card yellow">'
             '<div class="guide-title">Taux de rendement exigé par l\'actionnaire</div>'
@@ -5976,7 +5901,7 @@ elif current_page == t("page_explications"):
             unsafe_allow_html=True
         )
 
-    with st.expander("📅 Horizon DCF — Nombre d'années de projection (DCF uniquement)", expanded=False):
+    with st.expander(t("horizon_expander"), expanded=False):
         st.markdown(
             '<div class="guide-card purple">'
             '<div class="guide-title">Horizon de projection explicite</div>'
@@ -6010,8 +5935,8 @@ elif current_page == t("page_explications"):
         )
 
     st.markdown(
-        '<div class="guide-card" style="border-left-color:#a855f7;margin-top:4px;">'
-        '<div class="guide-title">📊 Tableau de sensibilité — Impact des paramètres</div>'
+        f'<div class="guide-card" style="border-left-color:#a855f7;margin-top:4px;">'
+        f'<div class="guide-title">{t("sensitivity_title")}</div>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -6026,8 +5951,7 @@ elif current_page == t("page_explications"):
 | **P/E moyen** | Multiples | 📈 Valeur **augmente** | Sectoriel |
 | **Book Value** | ANR | Neutre (données historiques) | — |
 """)
-    st.caption("💡 Les cases avec **augmente fortement** sont les paramètres les plus sensibles — "
-               "à tester en scénario pessimiste/optimiste avant toute décision d'investissement.")
+    st.caption(t("sensitivity_caption"))
 
 
 # ============================================================
