@@ -1143,8 +1143,8 @@ def dialog_import_portfolio():
     # ÉTAPE 1 — Upload du fichier
     # ════════════════════════════════════════════════════════════
     if step == 1:
-        st.markdown("**Charger le fichier XML Portfolio Performance**")
-        st.caption("Menu *Fichier → Enregistrer sous…* dans Portfolio Performance.")
+        st.markdown(t("pp_upload_md"))
+        st.caption(t("pp_upload_cap"))
 
         uploaded = st.file_uploader(
             "Fichier .xml",
@@ -1166,11 +1166,11 @@ def dialog_import_portfolio():
                     st.session_state.import_last_file_id = file_id
                     step = 2   # on continue dans ce même rendu
                 except Exception as e:
-                    st.error(f"❌ Erreur d'analyse : {e}")
+                    st.error(t("pp_parse_err", e=e))
                     uploaded = None
 
         if step == 1:  # toujours étape 1 (pas encore de fichier valide)
-            st.info("👆 Sélectionnez votre fichier Portfolio Performance (.xml) ci-dessus.")
+            st.info(t("pp_upload_info"))
             if st.button("❌ Fermer", use_container_width=True, key="import_cancel_1"):
                 st.session_state.import_step         = 1
                 st.session_state.import_parsed       = None
@@ -1181,7 +1181,7 @@ def dialog_import_portfolio():
     # ÉTAPE 2 — Sélection du compte titre
     # ════════════════════════════════════════════════════════════
     if step == 2 and parsed:
-        st.markdown("**Choisir le compte titre à importer**")
+        st.markdown(t("pp_select_md"))
         port_names = list(parsed.keys())
 
         selected_port = st.selectbox(
@@ -1193,8 +1193,8 @@ def dialog_import_portfolio():
         # Aperçu du compte sélectionné
         if selected_port and selected_port in parsed:
             holdings = parsed[selected_port]
-            st.caption(f"📊 **{len(holdings)} position(s)** dans **{selected_port}** :")
-            st.caption("ℹ️ Les PRU sont en EUR (devise Portfolio Performance) et seront importés tels quels.")
+            st.caption(t("pp_positions_cap", n=len(holdings), name=selected_port))
+            st.caption(t("pp_pru_note"))
             preview_rows = []
             for h in holdings[:12]:
                 preview_rows.append({
@@ -1210,7 +1210,7 @@ def dialog_import_portfolio():
                 height=min(38 * len(preview_rows) + 38, 340),
             )
             if len(holdings) > 12:
-                st.caption(f"… et {len(holdings) - 12} autre(s) position(s) non affichée(s).")
+                st.caption(t("pp_more_pos", n=len(holdings) - 12))
 
         c1, c2, c3 = st.columns([2, 1, 1])
         with c1:
@@ -1237,20 +1237,20 @@ def dialog_import_portfolio():
         selected_port = st.session_state.get("import_selected_port", "")
         holdings      = parsed.get(selected_port, [])
 
-        st.markdown("**Nommer la watchlist et confirmer l'import**")
+        st.markdown(t("pp_confirm_md"))
 
         wl_name = st.text_input(
             "Nom de la watchlist",
             value=selected_port.strip(),
             key="import_wl_name",
-            help="Une nouvelle watchlist sera créée avec ce nom (ou remplacée si elle existe déjà).",
+            help=t("pp_wl_name_help"),
         )
 
         existing = load_wl_index()
         if wl_name.strip() in existing:
-            st.warning(f"⚠️ La watchlist **{wl_name.strip()}** existe déjà — son contenu sera **remplacé**.")
+            st.warning(t("pp_wl_exists_warn", name=wl_name.strip()))
         else:
-            st.info(f"✨ Une nouvelle watchlist **{wl_name.strip() or '…'}** sera créée.")
+            st.info(t("pp_wl_new_info", name=wl_name.strip() or "…"))
 
         st.caption(
             f"📥 **{len(holdings)} position(s)** seront importées "
@@ -1268,7 +1268,7 @@ def dialog_import_portfolio():
         if confirm3:
             name = wl_name.strip()
             if not name:
-                st.error("Le nom ne peut pas être vide.")
+                st.error(t("pp_name_empty"))
             else:
                 if name not in existing:
                     create_watchlist(name)
@@ -1289,7 +1289,7 @@ def dialog_import_portfolio():
                 st.session_state.import_step         = 1
                 st.session_state.import_parsed       = None
                 st.session_state.import_last_file_id = None
-                st.toast(f"✅ {len(rows)} position(s) importées dans **{name}** !", icon="📥")
+                st.toast(t("pp_import_toast", n=len(rows), name=name), icon="📥")
                 st.rerun()
 
         if back3:
@@ -1362,11 +1362,11 @@ def watchlist_button(ticker, company="", key_suffix=""):
     in_wl  = is_in_watchlist(ticker, name=active_wl)
     label  = "✅ Watchlist" if in_wl else "⭐ Watchlist"
     if st.button(label, key=f"wl_btn_{ticker}_{key_suffix}",
-                 help=f"{'Retirer de' if in_wl else 'Ajouter à'} la watchlist ({active_wl})",
+                 help=t("wl_btn_remove_help" if in_wl else "wl_btn_add_help", name=active_wl),
                  use_container_width=False):
         if in_wl:
             remove_from_watchlist(ticker, name=active_wl)
-            st.toast(f"❌ {ticker} retiré de la watchlist", icon="🗑️")
+            st.toast(t("wl_toast_removed", ticker=ticker), icon="🗑️")
             st.rerun()
         else:
             st.session_state.wl_pending_action = {
@@ -1391,8 +1391,8 @@ def dialog_confirm_wl_add():
     """
     pending = st.session_state.get("wl_pending_action")   # {"ticker": ..., "company": ..., "action": "add"|"remove"}
     if not pending:
-        st.warning("Aucune action en attente.")
-        if st.button("Fermer"):
+        st.warning(t("wl_no_pending"))
+        if st.button(t("wl_close_btn")):
             st.rerun()
         return
 
@@ -1401,7 +1401,7 @@ def dialog_confirm_wl_add():
     action  = pending.get("action", "add")
 
     if action == "add":
-        st.markdown(f"**Ajouter `{tkr}`** ({company}) à la watchlist :")
+        st.markdown(t("wl_dialog_add_label_inline", ticker=tkr, company=company))
         wl_names = load_wl_index()
         current  = st.session_state.get("active_watchlist", wl_names[0])
         chosen   = st.selectbox(
@@ -1423,11 +1423,11 @@ def dialog_confirm_wl_add():
 
         col_ok, col_cancel = st.columns(2)
         with col_ok:
-            if st.button("✅ Ajouter", use_container_width=True, type="primary", disabled=already):
+            if st.button(t("wl_dialog_add_btn"), use_container_width=True, type="primary", disabled=already):
                 st.session_state.active_watchlist = chosen
                 add_to_watchlist(tkr, company, name=chosen)
                 st.session_state.wl_pending_action = None
-                st.toast(f"⭐ {tkr} ajouté à **{chosen}** !", icon="✅")
+                st.toast(t("wl_toast_added", ticker=tkr, name=chosen), icon="✅")
                 st.rerun()
         with col_cancel:
             if st.button("❌ Annuler", use_container_width=True):
@@ -1438,7 +1438,7 @@ def dialog_confirm_wl_add():
         st.markdown(f"**Retirer `{tkr}`** de la watchlist **{st.session_state.active_watchlist}** ?")
         col_ok, col_cancel = st.columns(2)
         with col_ok:
-            if st.button("🗑️ Retirer", use_container_width=True, type="primary"):
+            if st.button(t("wl_dialog_remove_btn"), use_container_width=True, type="primary"):
                 remove_from_watchlist(tkr, name=st.session_state.active_watchlist)
                 st.session_state.wl_pending_action = None
                 st.toast(f"❌ {tkr} retiré de la watchlist", icon="🗑️")
@@ -2076,8 +2076,7 @@ def render_scorecard(f):
             unsafe_allow_html=True
         )
     with sp_col:
-        st.markdown("**Score global** basé sur 7 critères fondamentaux : "
-                    "Croissance CA, Croissance FCF, ROIC, Marge FCF, Dette/FCF, PEG, Price/Book.")
+        st.markdown(t("scorecard_global_label"))
         pct = f["score_10"] / 10
         color = "#28a745" if pct >= 0.7 else "#ffc107" if pct >= 0.4 else "#dc3545"
         st.markdown(
@@ -2091,11 +2090,11 @@ def render_scorecard(f):
 
     CATEGORIES = [
         {
-            "title": "📈 Indicateurs de Croissance",
+            "title": t("scorecard_cat_growth"),
             "border": "#28a745",
             "metrics": [
-                {"t": "Croissance CA",  "v": f["rev_growth"], "tgt": "> 10%", "ok": (f["rev_growth"] or 0) > 10, "u": "%"},
-                {"t": "Croissance FCF", "v": f["fcf_growth"], "tgt": "> 10%", "ok": (f["fcf_growth"] or 0) > 10, "u": "%"},
+                {"t": t("scorecard_metric_rev"),  "v": f["rev_growth"], "tgt": "> 10%", "ok": (f["rev_growth"] or 0) > 10, "u": "%"},
+                {"t": t("scorecard_metric_fcf"), "v": f["fcf_growth"], "tgt": "> 10%", "ok": (f["fcf_growth"] or 0) > 10, "u": "%"},
             ],
         },
         {
@@ -2155,7 +2154,7 @@ def render_scorecard(f):
                     f'<div class="metric-card {cls}">'
                     f'<div class="metric-title">{icon} {m["t"]}</div>'
                     f'<div class="metric-value">{val_str}</div>'
-                    f'<div class="metric-target">Obj: {m["tgt"]}</div>'
+                    f'<div class="metric-target">{t("scorecard_obj")} {m["tgt"]}</div>'
                     f'</div>',
                     unsafe_allow_html=True
                 )
@@ -2216,12 +2215,12 @@ def render_company_info(ticker, info):
 
         st.markdown(
             f'<div class="info-card">'
-            f'<h5>🏢 Profil</h5>'
-            f'<div class="info-line"><span class="info-label">Nom :</span> <span class="info-value">{name}</span></div>'
-            f'<div class="info-line"><span class="info-label">Secteur :</span> {sector}</div>'
-            f'<div class="info-line"><span class="info-label">Industrie :</span> {industry}</div>'
-            f'<div class="info-line"><span class="info-label">Pays :</span> {country}</div>'
-            f'<div class="info-line"><span class="info-label">Employés :</span> {emp_str}</div>'
+            f'<h5>{t("company_profile_title")}</h5>'
+            f'<div class="info-line"><span class="info-label">{t("company_name_lbl")}</span> <span class="info-value">{name}</span></div>'
+            f'<div class="info-line"><span class="info-label">{t("company_sector_lbl")}</span> {sector}</div>'
+            f'<div class="info-line"><span class="info-label">{t("company_industry_lbl")}</span> {industry}</div>'
+            f'<div class="info-line"><span class="info-label">{t("company_country_lbl")}</span> {country}</div>'
+            f'<div class="info-line"><span class="info-label">{t("company_employees_lbl")}</span> {emp_str}</div>'
             f'<div class="info-line" style="margin-top:6px;color:#aaa;font-size:0.78rem;line-height:1.4;">{summary_short}</div>'
             f'</div>',
             unsafe_allow_html=True
@@ -2248,7 +2247,7 @@ def render_company_info(ticker, info):
         except:
             pass
 
-        div_rate_str  = f"{div_rate:.2f} {info.get('currency','')}" if safe(div_rate) else "Aucun"
+        div_rate_str  = f"{div_rate:.2f} {info.get('currency','')}" if safe(div_rate) else t("company_none")
         # yfinance retourne dividendYield tantôt en décimal (0.0312 = 3.12%)
         # tantôt déjà en pourcentage (3.12 = 3.12%) selon les sources.
         # Si la valeur est > 1 elle est déjà en %, sinon on multiplie par 100.
@@ -2281,18 +2280,18 @@ def render_company_info(ticker, info):
 
         st.markdown(
             f'<div class="info-card green">'
-            f'<h5>💰 Dividende</h5>'
-            f'<div class="info-line"><span class="info-label">Dividende annuel :</span> <span class="info-value">{div_rate_str}</span></div>'
-            f'<div class="info-line"><span class="info-label">Rendement :</span> <span class="info-value">{div_yield_str}</span></div>'
-            f'<div class="info-line"><span class="info-label">Ex-date :</span> {ex_div_str}</div>'
-            f'<div class="info-line"><span class="info-label">Prochain paiement :</span> <span class="info-value">{pay_str}</span></div>'
+            f'<h5>{t("company_dividend_title")}</h5>'
+            f'<div class="info-line"><span class="info-label">{t("company_annual_div")}</span> <span class="info-value">{div_rate_str}</span></div>'
+            f'<div class="info-line"><span class="info-label">{t("company_yield")}</span> <span class="info-value">{div_yield_str}</span></div>'
+            f'<div class="info-line"><span class="info-label">{t("company_exdate")}</span> {ex_div_str}</div>'
+            f'<div class="info-line"><span class="info-label">{t("company_next_payment")}</span> <span class="info-value">{pay_str}</span></div>'
             f'</div>',
             unsafe_allow_html=True
         )
 
     # ── Recommandations analystes ────────────────────────────
     with col_rec:
-        rec_html = '<div class="info-card orange"><h5>📋 Recommandations Analystes</h5>'
+        rec_html = f'<div class="info-card orange"><h5>{t("company_rec_title")}</h5>'
         try:
             rec_df = get_recommendations(ticker)
             if rec_df is not None and not rec_df.empty:
@@ -2353,9 +2352,9 @@ def render_company_info(ticker, info):
                             )
                         rec_html += rows_r if rows_r else '<div class="info-line" style="color:#666;">Aucune donnée</div>'
                     else:
-                        rec_html += '<div class="info-line" style="color:#666;">Format inconnu</div>'
+                        rec_html += f'<div class="info-line" style="color:#666;">{t("company_rec_unknown")}</div>'
             else:
-                rec_html += '<div class="info-line" style="color:#666;">Aucune recommandation disponible</div>'
+                rec_html += f'<div class="info-line" style="color:#666;">{t("company_rec_none")}</div>'
         except Exception as e:
             rec_html += f'<div class="info-line" style="color:#666;">Erreur : {e}</div>'
 
@@ -2557,7 +2556,7 @@ def render_historical_charts(f, ticker):
 
         with g_col1:
             fig_rev = _bar_series(
-                "📊 Chiffre d'Affaires (Mrd)",
+                t("chart_revenue_name"),
                 years_all, rev_b, "Mrd",
                 color_fn=lambda v: "#4C9BE8",
                 overlay_values=fcf_b, overlay_name="Free Cash Flow (Mrd)",
@@ -2567,7 +2566,7 @@ def render_historical_charts(f, ticker):
             valid_rev = [(y, v) for y, v in zip(years_all, rev_b) if v is not None]
             if len(valid_rev) >= 2:
                 fig_rev.add_trace(go.Scatter(
-                    name="Tendance CA", x=[r[0] for r in valid_rev], y=[r[1] for r in valid_rev],
+                    name=t("chart_trend_ca"), x=[r[0] for r in valid_rev], y=[r[1] for r in valid_rev],
                     mode="lines+markers", line=dict(color="#FFD700", width=2, dash="dot"),
                 ))
             st.plotly_chart(fig_rev, use_container_width=True)
@@ -2890,7 +2889,7 @@ if current_page == t("page_presentation"):
         'style="color:#FFD700;font-weight:700;font-size:0.85rem;text-decoration:none;">'  
         'Portfolio Performance'
         '</a>'
-        '<span style="font-size:0.82rem;color:#7ad4f5;"> — import direct de votre compte-titres (fichier XML)</span>'
+        f'<span style="font-size:0.82rem;color:#7ad4f5;"> {t("hero_pp_desc_inline")}</span>'
         '</div>'
         '</div>',
         unsafe_allow_html=True
@@ -2903,17 +2902,17 @@ if current_page == t("page_presentation"):
     _nb_tickers_str  = f"{_nb_tickers:,}".replace(",", " ") if _nb_tickers > 0 else "∞"
     _nb_indices_lbl  = ", ".join(
         get_label_extended(k) for k in list(all_data.keys())[:3]
-    ) + ("…" if _nb_indices > 3 else "") if _nb_indices > 0 else "Aucun chargé"
+    ) + ("…" if _nb_indices > 3 else "") if _nb_indices > 0 else t("stat_none_loaded")
     _nb_val_methods  = len(["DCF", "Gordon-Shapiro", "Multiples P/E", "ANR", "Historique"])
     _nb_sigma_zones  = len(SIGMA_CRITERIA)
 
     sc1, sc2, sc3, sc4, sc5 = st.columns(5)
     stats = [
-        (str(_nb_modules),      "Modules d'analyse"),
-        (str(_nb_indices),      f"Indices chargés ({_nb_indices_lbl})"),
-        (_nb_tickers_str + "+",  "Tickers pré-chargés (∞ via Yahoo Finance)"),
-        (str(_nb_val_methods),  "Méthodes de valorisation"),
-        (str(_nb_sigma_zones),  "Zones sigma détectées"),
+        (str(_nb_modules),      t("stat_modules")),
+        (str(_nb_indices),      t("stat_indices_loaded", lbl=_nb_indices_lbl)),
+        (_nb_tickers_str + "+",  t("stat_tickers")),
+        (str(_nb_val_methods),  t("stat_methods")),
+        (str(_nb_sigma_zones),  t("stat_sigma_zones")),
     ]
     for col, (num, lbl) in zip([sc1, sc2, sc3, sc4, sc5], stats):
         col.markdown(
@@ -3098,13 +3097,13 @@ if current_page == t("page_presentation"):
     col_qs, col_sigma = st.columns([1, 1])
 
     with col_qs:
-        st.markdown("### 🚀 Démarrage rapide")
+        st.markdown(t("quickstart_title"))
         steps = [
-            ("1", "Allez dans <strong>⚙️ Configuration</strong> et chargez un indice (S&P 500, CAC 40…) depuis Wikipedia."),
-            ("2", "Ouvrez <strong>📈 Analyse valeur</strong>, saisissez un ticker (ex : <code>AAPL</code>, <code>BNP.PA</code>) et lancez l'analyse."),
-            ("3", "Consultez la <strong>scorecard fondamentale</strong> et la <strong>position sigma</strong> pour évaluer la valeur."),
-            ("4", "Ajoutez les valeurs intéressantes à votre <strong>⭐ Watchlist</strong> pour les suivre."),
-            ("5", "Utilisez le <strong>🔭 Screener Sigma</strong> pour scanner un indice entier en un clic."),
+            ("1", t("qs_step1")),
+            ("2", t("qs_step2")),
+            ("3", t("qs_step3")),
+            ("4", t("qs_step4")),
+            ("5", t("qs_step5")),
         ]
         for num, text in steps:
             st.markdown(
@@ -3116,13 +3115,13 @@ if current_page == t("page_presentation"):
             )
 
     with col_sigma:
-        st.markdown("### 📐 Comprendre les zones sigma")
+        st.markdown(t("sigma_zones_title"))
         sigma_zones = [
-            ("📉📉", "Excès Bas  (< −1,75σ)", "#3CB371", "Zone de 'soldes' statistiques — opportunité potentielle"),
-            ("📉",   "Tendance Faible (−0,75 à −1,25σ)", "#90EE90", "Canal baissier — Bear market"),
-            ("〰️",   "Zone Neutre (−0,25 à +0,25σ)", "#ffc107", "Équilibre — pas de direction claire"),
-            ("🚀",   "Tendance Forte (+0,75 à +1,25σ)", "#FFA07A", "Canal haussier idéal — Bull run"),
-            ("📈📈", "Excès Haut  (> +1,75σ)", "#FF4C4C", "Surchauffe — risque de retour à la moyenne"),
+            ("📉📉", t("sigma_zone1_label"), "#3CB371", t("sigma_zone1_desc")),
+            ("📉",   t("sigma_zone2_label"), "#90EE90", t("sigma_zone2_desc")),
+            ("〰️",   t("sigma_zone3_label"), "#ffc107", t("sigma_zone3_desc")),
+            ("🚀",   t("sigma_zone4_label"), "#FFA07A", t("sigma_zone4_desc")),
+            ("📈📈", t("sigma_zone5_label"), "#FF4C4C", t("sigma_zone5_desc")),
         ]
         for icon, label, color, desc in sigma_zones:
             st.markdown(
@@ -3152,8 +3151,8 @@ if current_page == t("page_presentation"):
 
         legend_html = (
             '<div style="display:flex;gap:18px;margin-bottom:14px;font-size:0.78rem;color:#9ab;">'
-            '<span>🔴 Priorité haute</span>'
-            '<span>🟢 À l\'étude</span>'
+            f'<span>{t("roadmap_high")}</span>'
+            f'<span>{t("roadmap_study")}</span>'
             '</div>'
         )
         st.markdown(legend_html, unsafe_allow_html=True)
@@ -3172,10 +3171,7 @@ if current_page == t("page_presentation"):
                 unsafe_allow_html=True
             )
 
-        st.caption(
-            "💡 Dites-moi ce qui vous serait le plus utile dans la section "
-            "**Suggestions & améliorations** ci-dessous !"
-        )
+        st.caption(t("roadmap_caption"))
 
     # ── Expander 1 : Vie & statistiques d'utilisation ────────────
     with st.expander(t("stats_expander"), expanded=False):
@@ -3261,7 +3257,7 @@ if current_page == t("page_presentation"):
         with st.form("form_feedback", clear_on_submit=True):
             msg = st.text_area(
                 "Votre suggestion",
-                placeholder="Ex : Ajouter un indicateur MACD, améliorer la page screener...",
+                placeholder=t("feedback_placeholder"),
                 max_chars=500,
                 height=100,
                 label_visibility="collapsed"
@@ -3329,7 +3325,7 @@ if current_page == t("page_analyse"):
                 _ac_catalog[_t.upper()] = f"{_t} — {_c}" if _c else _t
     _ac_options = [""] + list(_ac_catalog.values())
 
-    with st.expander("🔍 Paramètres d'analyse", expanded=True):
+    with st.expander(t("analyse_params_expander"), expanded=True):
         col_a, col_b = st.columns([2, 3])
 
         with col_a:
@@ -3514,16 +3510,16 @@ if current_page == t("page_analyse"):
             yahoo_url = f"https://finance.yahoo.com/quote/{ticker_disp}"
             st.markdown(
                 f'<div class="yahoo-link" style="margin-top:6px;font-size:0.75rem;">'
-                f'🔗 <a href="{yahoo_url}" target="_blank">Voir sur Yahoo Finance → {ticker_disp}</a></div>',
+                f'🔗 <a href="{yahoo_url}" target="_blank">{t("analyse_yahoo_link_text", ticker=ticker_disp)}</a></div>',
                 unsafe_allow_html=True
             )
 
         # ── Informations société dans une fenêtre dépliante ───────
-        with st.expander("🏢 Informations sur la société", expanded=False):
+        with st.expander(t("analyse_company_expander"), expanded=False):
             render_company_info(ticker_disp, res["f"]["info"])
 
         st.divider()
-        with st.expander("📈 Analyse de Tendance", expanded=True):
+        with st.expander(t("analyse_trend_expander"), expanded=True):
             # ── Graphique + sélecteur période + contrôles échelle ─────
             gph_left, gph_right = st.columns([8, 1])
         with gph_right:
@@ -3607,12 +3603,12 @@ if current_page == t("page_analyse"):
             (lbl for lbl, (mn, mx, _) in SIGMA_CRITERIA.items() if mn <= sigma_pos < mx),
             f"{sigma_pos:+.2f}σ"
         )
-        st.caption(f"📍 Position actuelle : **{sigma_pos:+.2f}σ** — {zone_label.split('(')[0].strip()}")
+        st.caption(t("analyse_position_caption", sigma=f"{sigma_pos:+.2f}", zone=zone_label.split("(")[0].strip()))
 
         st.divider()
 
         # ── Graphique Analyse Technique ───────────────────────────
-        with st.expander("📊 Analyse Technique", expanded=False):
+        with st.expander(t("analyse_tech_expander"), expanded=False):
             tc_col1, tc_col2 = st.columns([6, 1])
 
             with tc_col2:
@@ -3678,7 +3674,7 @@ if current_page == t("page_analyse"):
                     tc_ma1 = st.number_input("MM 1", value=9,   min_value=1, max_value=500, key="tc_ma1", label_visibility="collapsed")
                     tc_ma2 = st.number_input("MM 2", value=20,  min_value=1, max_value=500, key="tc_ma2", label_visibility="collapsed")
                     tc_ma3 = st.number_input("MM 3", value=200, min_value=1, max_value=500, key="tc_ma3", label_visibility="collapsed")
-                    st.caption(f"MM {int(tc_ma1)} / {int(tc_ma2)} / {int(tc_ma3)}")
+                    st.caption(t("analyse_ma_caption", ma1=int(tc_ma1), ma2=int(tc_ma2), ma3=int(tc_ma3)))
 
                 if tc_show_bb:
                     tc_bb_period = st.number_input(t("tc_bb_period_label"), value=20, min_value=5, max_value=100, key="tc_bb_period")
@@ -3876,7 +3872,7 @@ if current_page == t("page_analyse"):
 
         st.divider()
         # ── Prix Juste Historique ──────────────────────────────────
-        with st.expander("💰 Prix Juste Historique", expanded=False):
+        with st.expander(t("analyse_fv_expander"), expanded=False):
             fv_methods = ["DCF", "Multiples (P/E)", "Gordon-Shapiro (DDM)", "ANR (Book Value)"]
             fv_gran_opts_fr = {"Mensuelle": "1mo", "Hebdomadaire": "1wk", "Annuelle": "1y"}
             fv_gran_opts = {t("fv_gran_monthly"): "1mo", t("fv_gran_weekly"): "1wk", t("fv_gran_yearly"): "1y"}
@@ -4242,7 +4238,7 @@ elif current_page == t("page_watchlists"):
 
         if st.session_state.get("wl_show_delete"):
             wl_to_del = st.session_state.active_watchlist
-            st.warning(f"⚠️ Supprimer la watchlist **{wl_to_del}** et toutes ses entrées ?")
+            st.warning(t("wl_delete_confirm_warn", name=wl_to_del))
             d1, d2 = st.columns(2)
             with d1:
                 if st.button("🗑️ Confirmer la suppression", use_container_width=True, key="wl_del_confirm"):
@@ -4258,7 +4254,7 @@ elif current_page == t("page_watchlists"):
                     st.session_state["wl_show_delete"] = False
                     st.rerun()
 
-        st.caption(f"💾 **{st.session_state.active_watchlist}** — sauvegarde automatique")
+        st.caption(t("wl_autosave_caption", name=st.session_state.active_watchlist))
 
     df_wl = load_watchlist(st.session_state.active_watchlist)
 
@@ -4283,19 +4279,19 @@ elif current_page == t("page_watchlists"):
                             company_to_add = ""
                     ok = add_to_watchlist(new_ticker, company_to_add, name=st.session_state.active_watchlist)
                     if ok:
-                        st.success(f"✅ {new_ticker} ajouté à la watchlist !")
+                        st.success(t("wl_add_ok", ticker=new_ticker))
                         st.rerun()
                     else:
-                        st.warning(f"{new_ticker} est déjà dans la watchlist.")
+                        st.warning(t("wl_add_duplicate", ticker=new_ticker))
                 else:
-                    st.warning("Entrez un ticker.")
+                    st.warning(t("wl_add_empty"))
 
     st.divider()
 
     # ── Tableau principal ─────────────────────────────────────
     df_wl = load_watchlist(st.session_state.active_watchlist)
     if df_wl.empty:
-        st.info("👆 Votre watchlist est vide. Ajoutez des actions via le bouton **⭐ Watchlist** présent sur toutes les pages, ou manuellement ci-dessus.")
+        st.info(t("wl_empty_info"))
     else:
         # Boutons de contrôle — même ligne horizontale
         ctrl1, ctrl2, ctrl3 = st.columns([2, 2, 4])
@@ -4316,8 +4312,7 @@ elif current_page == t("page_watchlists"):
             )
             wl_period = PERIODS[wl_period_label]
 
-        st.markdown(f"**{len(df_wl)} action(s) suivie(s)** — Données live (cours) + fondamentaux (cache 1h) · "
-                    f"*Période σ : {wl_period_label}*")
+        st.markdown(t("wl_stocks_followed", n=len(df_wl), uid=f"*Période σ : {wl_period_label}*"))
 
         # ── Chargement des données pour chaque ligne ──────────
         rows_data = []
@@ -4415,7 +4410,7 @@ elif current_page == t("page_watchlists"):
 
         progress.empty()
         if load_errors:
-            st.caption(f"⚠️ Données indisponibles pour : {', '.join(load_errors)}")
+            st.caption(t("wl_data_errors_caption", tickers=", ".join(load_errors)))
 
         # ── Helpers formatage valeurs ─────────────────────────
         def fmt_num(v, suffix="", dec=1):
@@ -4532,7 +4527,7 @@ elif current_page == t("page_watchlists"):
         HEADER_H   = 38
         TABLE_HEIGHT = len(df_display) * ROW_H + HEADER_H + 2
 
-        st.caption("💡 Cochez **📈** sur la gauche pour lancer l'analyse individuelle du ticker")
+        st.caption(t("wl_analyse_tip"))
 
         col_chk, col_tbl = st.columns([1, 30])
 
@@ -4618,7 +4613,7 @@ elif current_page == t("page_watchlists"):
                 )
                 st.plotly_chart(fig_wl, use_container_width=True)
             else:
-                st.caption("Données sigma indisponibles.")
+                st.caption(t("wl_sigma_no_data"))
 
         # ── Mini-graphique +/- PRU (écart cours / prix d'achat) ──
         with st.expander("💰 Aperçu graphique de la watchlist (écart cours / PRU)", expanded=False):
@@ -4657,7 +4652,7 @@ elif current_page == t("page_watchlists"):
                 )
                 st.plotly_chart(fig_pru, use_container_width=True)
             else:
-                st.caption("Aucun prix d'achat renseigné dans cette watchlist.")
+                st.caption(t("wl_pru_no_data"))
 
         st.divider()
 
@@ -4680,7 +4675,7 @@ elif current_page == t("page_watchlists"):
                 })
 
             df_wl_editor = pd.DataFrame(wl_editor_data)
-            st.caption("💡 Cochez **🗑️ Retirer** pour supprimer une action de la watchlist")
+            st.caption(t("wl_remove_tip"))
             edited_wl = st.data_editor(
                 df_wl_editor,
                 use_container_width=True,
@@ -4724,7 +4719,7 @@ elif current_page == t("page_watchlists"):
                             if edit_price:
                                 df_edit.loc[mask, "prix_achat"] = edit_price
                             save_watchlist(df_edit, name=st.session_state.active_watchlist)
-                            st.success("✅ Modifié.")
+                            st.success(t("wl_edit_ok"))
                             st.rerun()
 
 
@@ -4751,16 +4746,16 @@ elif current_page == t("page_comparaison"):
     all_tickers_options = sorted(set(all_tickers_options))
     full_options        = select_all_options + all_tickers_options
 
-    with st.expander("🔍 Paramètres de comparaison", expanded=True):
+    with st.expander(t("comp_params_expander"), expanded=True):
         row1_col1, row1_col2 = st.columns([3, 1])
         with row1_col1:
-            st.markdown("**Sélectionner les actions à comparer**")
+            st.markdown(t("comp_select_label"))
             manual_tickers_raw = st.text_input("Tickers manuels (séparés par des virgules)", value="^GSPC, ^NDX",
                                                label_visibility="collapsed",
                                                placeholder=t("comp_ticker_ph"))
             manual_tickers = [t.strip().upper() for t in manual_tickers_raw.split(",") if t.strip()]
         with row1_col2:
-            st.markdown("**📅 Horizon temporel**")
+            st.markdown(t("comp_period_label_bold"))
             period_label = st.selectbox(
                 "Horizon temporel",
                 options=list(PERIODS.keys()),
@@ -4786,11 +4781,11 @@ elif current_page == t("page_comparaison"):
 
             compare_tickers = list(dict.fromkeys(manual_tickers + extra_tickers))
             if compare_tickers:
-                st.caption(f"**Actions sélectionnées :** {', '.join(compare_tickers)}")
+                st.caption(t("comp_selected_cap", tickers=", ".join(compare_tickers)))
 
         with row2_col2:
             st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
-            btn_compare = st.button("📊 Comparer", use_container_width=True)
+            btn_compare = st.button(t("comp_btn"), use_container_width=True)
 
     st.divider()
 
@@ -4834,7 +4829,7 @@ elif current_page == t("page_comparaison"):
                     "tickers":      list(df_norm.columns),
                 }
             else:
-                st.error("Aucune donnée disponible.")
+                st.error(t("comp_no_data"))
                 st.session_state.comparaison_result = None
 
     res_c = st.session_state.comparaison_result
@@ -4860,7 +4855,7 @@ elif current_page == t("page_comparaison"):
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        st.subheader("📋 Tableau de performance")
+        st.subheader(t("comp_table_subtitle"))
         k1, k2, _ = st.columns([1,1,4])
         with k1: st.metric(t("comp_best"),   df_perf.iloc[0]["Ticker"], delta=f"{df_perf.iloc[0]['_perf_raw']:+.1f}%")
         with k2: st.metric(t("comp_worst"), df_perf.iloc[-1]["Ticker"], delta=f"{df_perf.iloc[-1]['_perf_raw']:+.1f}%")
@@ -4887,7 +4882,7 @@ elif current_page == t("page_comparaison"):
                 "⭐ Watchlist":    tkr_c.upper() in wl_tickers_set_comp,
             })
         df_comp_editor = pd.DataFrame(comp_editor_data)
-        st.caption("💡 Cochez **📈 Analyser** pour l'analyse individuelle · Cochez **⭐ Watchlist** pour ajouter/retirer")
+        st.caption(t("comp_tip_caption"))
         edited_comp = st.data_editor(
             df_comp_editor,
             use_container_width=True,
@@ -4913,7 +4908,7 @@ elif current_page == t("page_comparaison"):
         _check_wl_toggle(edited_comp, "prev_wl_comp", "Ticker", "Nom", "⭐ Watchlist")
     else:
         if not btn_compare:
-            st.info("👆 Sélectionnez des actions puis cliquez sur **📊 Comparer**.")
+            st.info(t("comp_configure_msg"))
 
 
 # ============================================================
@@ -4955,7 +4950,7 @@ elif current_page == t("page_screener_sigma"):
             if selected_criteria:
                 psycho_lines = [f"**{zk.split('(')[0].strip()}** : {SIGMA_CRITERIA[zk][2]}" for zk in selected_criteria]
                 st.info("💬 " + "  \n".join(psycho_lines))
-            btn_scan = st.button("🔍 Lancer le scan", type="primary",
+            btn_scan = st.button(t("screener_sigma_launch"), type="primary",
                                  disabled=(not selected_criteria or sigma_index_key is None))
 
     st.divider()
@@ -4964,7 +4959,7 @@ elif current_page == t("page_screener_sigma"):
         df_index    = all_data_extended[sigma_index_key]
         total       = len(df_index)
         zones_label = ", ".join(zk.split("(")[0].strip() for zk in selected_criteria)
-        st.info(f"🔄 Scan de **{total}** actions de **{get_label_extended(sigma_index_key)}** sur **{sigma_period_label}** — zones : **{zones_label}**")
+        st.info(t("screener_sigma_info", n=total, index=get_label_extended(sigma_index_key), period=sigma_period_label, zones=zones_label))
 
         progress_bar  = st.progress(0, text=t("screener_sigma_init"))
         results_found = []
@@ -4994,7 +4989,7 @@ elif current_page == t("page_screener_sigma"):
 
         progress_bar.empty()
         if errors_scan:
-            st.caption(f"⚠️ Données indisponibles : {', '.join(errors_scan[:10])}{'…' if len(errors_scan)>10 else ''}")
+            st.caption(t("screener_sigma_errors_cap", tickers=", ".join(errors_scan[:10]) + ("…" if len(errors_scan)>10 else "")))
 
         if not results_found:
             st.warning(t("screener_sigma_no_result"))
@@ -5084,7 +5079,7 @@ elif current_page == t("page_screener_sigma"):
             )
             if _log_mode:
                 st.session_state.chart_display_mode = "cours"
-                st.caption("⚠️ Variation % incompatible avec l'échelle log")
+                st.caption(t("screener_sigma_log_cap"))
             else:
                 st.session_state.chart_display_mode = "cours" if sig_disp == t("chart_display_cours") else "pct"
 
@@ -5214,7 +5209,7 @@ elif current_page == t("page_screener_multi"):
     if btn_screener and scr_index_key:
         df_index = all_data_extended[scr_index_key]
         total    = len(df_index)
-        st.info(f"🔄 Scan de **{total}** actions de **{get_label_extended(scr_index_key)}** — chargement des données…")
+        st.info(t("screener_multi_info", n=total, index=get_label_extended(scr_index_key)))
 
         progress_bar = st.progress(0, text=t("screener_multi_init"))
         all_raw      = []   # toutes les données brutes, sans filtrage
@@ -5247,7 +5242,7 @@ elif current_page == t("page_screener_multi"):
 
         progress_bar.empty()
         if scr_errors:
-            st.caption(f"⚠️ Erreurs sur : {', '.join(scr_errors[:10])}{'…' if len(scr_errors)>10 else ''}")
+            st.caption(t("screener_multi_errors_cap", tickers=", ".join(scr_errors[:10]) + ("…" if len(scr_errors)>10 else "")))
 
         st.session_state.screener_result = {
             "all_raw":      all_raw,
@@ -5389,7 +5384,7 @@ elif current_page == t("page_screener_multi"):
 # PAGE 5 — GUIDE DES INDICATEURS
 # ============================================================
 elif current_page == t("page_explications"):
-    st.title("📖 Explications")
+    st.title(t("explain_title"))
     st.markdown(t("explain_subtitle"))
 
     st.markdown("""
@@ -6028,7 +6023,7 @@ elif current_page == t("page_configuration"):
         st.subheader(t("config_preview_title"))
         all_preview_options = ["-- Choisir un indice --"] + [get_label(k) for k in all_data]
         all_preview_keys    = [None] + list(all_data.keys())
-        preview_label = st.selectbox("Afficher les composants de", options=all_preview_options)
+        preview_label = st.selectbox(t("config_preview_select"), options=all_preview_options)
         preview_key   = all_preview_keys[all_preview_options.index(preview_label)]
         if preview_key:
             df_preview = all_data[preview_key].reset_index(drop=True)
@@ -6049,7 +6044,7 @@ elif current_page == t("page_configuration"):
         with st.form("form_admin_login", clear_on_submit=True):
             _pwd = st.text_input("Mot de passe administrateur",
                                  type="password",
-                                 placeholder="••••••••",
+                                 placeholder="••••••••", label=t("config_admin_pwd_label"),
                                  label_visibility="collapsed")
             _submitted = st.form_submit_button("🔑 Accéder", type="primary")
             if _submitted:
@@ -6090,7 +6085,7 @@ elif current_page == t("page_configuration"):
                     st.caption(f"🌐 Source : [{url}]({url})")
 
             if btn_update and selected_index_key is not None:
-                with st.spinner(f"Chargement {INDICES_CONFIG[selected_index_key]['label']}…"):
+                with st.spinner(t("config_wiki_loading", label=INDICES_CONFIG[selected_index_key]["label"])):
                     try:
                         df_scraped = scrape_index(selected_index_key)
                         save_index_to_master_csv(selected_index_key, df_scraped)
@@ -6100,7 +6095,7 @@ elif current_page == t("page_configuration"):
                         )
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Erreur scraping : {e}")
+                        st.error(t("config_wiki_err", e=e))
             elif btn_update and selected_index_key is None:
                 st.warning(t("config_wiki_select_first"))
 
@@ -6127,8 +6122,8 @@ elif current_page == t("page_configuration"):
                 f"  User ID (vous)    : {get_user_id()}",
                 language=""
             )
-            if st.button("🧹 Purger le cache market (> 2h)",
-                         help="Supprime les entrées de cache de plus de 2 heures"):
+            if st.button(t("config_cache_btn"),
+                         help=t("config_cache_help")):
                 purge_old_cache(max_age_hours=2)
                 st.success(t("config_cache_ok"))
 
@@ -6137,7 +6132,7 @@ elif current_page == t("page_configuration"):
             private_msgs = get_feedback_messages(limit=50, include_private=True)
             private_only = [m for m in private_msgs if m.get("is_private")]
             if private_only:
-                st.caption(f"{len(private_only)} message(s) privé(s)")
+                st.caption(t("config_private_count", n=len(private_only)))
                 for m in private_only:
                     try:
                         dt = datetime.fromisoformat(m["created_at"].replace("Z", "+00:00"))
@@ -6166,12 +6161,12 @@ elif current_page == t("page_configuration"):
             )
             col_purge1, col_purge2 = st.columns([2, 3])
             with col_purge1:
-                if st.button("🗑️ Purger les watchlists inactives (> 30j)",
+                if st.button(t("config_purge_btn"),
                              type="primary",
-                             help="Suppression définitive — irréversible"):
+                             help=t("config_purge_help")):
                     nb = purge_inactive_watchlists(days=30)
                     if nb > 0:
-                        st.success(f"✅ {nb} watchlist(s) inactive(s) supprimée(s).")
+                        st.success(t("config_purge_ok", n=nb))
                         st.rerun()
                     else:
-                        st.info("ℹ️ Aucune watchlist inactive à supprimer.")
+                        st.info(t("config_purge_none"))
