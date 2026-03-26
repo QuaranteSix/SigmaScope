@@ -2835,6 +2835,14 @@ if current_page == "🏠 Présentation":
         '<p class="tagline">La plateforme d\'analyse boursière quantitative tout-en-un<br>'
         'Régression log · Analyse fondamentale · Screener · Valorisation DCF</p>'
         '<span class="version-badge">✨ Version 24 — par jp</span>'
+        '<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(76,155,232,0.25);">'
+        '<span style="font-size:0.82rem;color:#7ad4f5;">🤝 Compatible avec </span>'
+        '<a href="https://www.portfolio-performance.info/en/" target="_blank" '
+        'style="color:#FFD700;font-weight:700;font-size:0.85rem;text-decoration:none;">'  
+        'Portfolio Performance'
+        '</a>'
+        '<span style="font-size:0.82rem;color:#7ad4f5;"> — import direct de votre compte-titres (fichier XML)</span>'
+        '</div>'
         '</div>',
         unsafe_allow_html=True
     )
