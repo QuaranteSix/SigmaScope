@@ -2552,7 +2552,7 @@ def render_historical_charts(f, ticker):
     # ═══════════════════════════════════════════════════════════
     # SECTION 1 — CROISSANCE
     # ═══════════════════════════════════════════════════════════
-    with st.expander("📈 Historique Indicateurs de Croissance", expanded=True):
+    with st.expander(t("hist_growth_expander"), expanded=True):
         g_col1, g_col2 = st.columns(2)
 
         with g_col1:
@@ -2611,7 +2611,7 @@ def render_historical_charts(f, ticker):
     # ═══════════════════════════════════════════════════════════
     # SECTION 2 — RENTABILITÉ
     # ═══════════════════════════════════════════════════════════
-    with st.expander("💰 Historique Indicateurs de Rentabilité", expanded=True):
+    with st.expander(t("hist_profit_expander"), expanded=True):
         r_col1, r_col2, r_col3 = st.columns(3)
 
         with r_col1:
@@ -2658,7 +2658,7 @@ def render_historical_charts(f, ticker):
     # ═══════════════════════════════════════════════════════════
     # SECTION 3 — VALORISATION
     # ═══════════════════════════════════════════════════════════
-    with st.expander("⚖️ Historique Indicateurs de Valorisation", expanded=True):
+    with st.expander(t("hist_valuation_expander"), expanded=True):
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
 
         with v_col1:
@@ -2692,7 +2692,7 @@ def render_historical_charts(f, ticker):
     # ═══════════════════════════════════════════════════════════
     # SECTION 4 — SOLIDITÉ FINANCIÈRE
     # ═══════════════════════════════════════════════════════════
-    with st.expander("🏦 Historique Indicateurs de Solidité Financière", expanded=True):
+    with st.expander(t("hist_solidity_expander"), expanded=True):
         s_col1, s_col2 = st.columns([1, 3])
 
         with s_col1:
@@ -2740,7 +2740,7 @@ def render_historical_charts(f, ticker):
                 )
                 st.plotly_chart(fig_wf, use_container_width=True)
             else:
-                st.caption("Données synthèse insuffisantes.")
+                st.caption(t("hist_no_synthesis"))
 
 
 # ============================================================
@@ -3344,20 +3344,20 @@ if current_page == t("page_analyse"):
                     st.session_state["_ticker_source"] = "autocomplete"
 
                 _ac_selected = st.selectbox(
-                    "Ticker / Société",
+                    t("analyse_ticker_label"),
                     options=_ac_options,
                     index=_ac_options.index(_prefill_val) if _prefill_val in _ac_options else 0,
                     key=_ac_key,
-                    placeholder="Tapez un ticker (AAPL) ou un nom (Apple)…",
-                    help="Recherche filtrante sur tous les indices chargés",
+                    placeholder=t("analyse_ticker_placeholder"),
+                    help=t("analyse_ticker_help"),
                     on_change=_on_autocomplete_change,
                 )
                 ticker_manual = _ac_selected.split(" — ")[0].strip() if _ac_selected else ""
             else:
                 ticker_manual = st.text_input(
-                    "Ticker manuel",
+                    t("analyse_ticker_manual"),
                     value=_prefill,
-                    placeholder="ex : AAPL, BNP.PA…"
+                    placeholder=t("analyse_ticker_manual_ph")
                 )
 
         with col_b:
@@ -3397,7 +3397,7 @@ if current_page == t("page_analyse"):
                         st.session_state["_ac_reset_count"] = st.session_state.get("_ac_reset_count", 0) + 1
 
                     selected_component = st.selectbox(
-                        f"Composant ({len(df_components_tmp)} valeurs)",
+                        t("analyse_composant_label", n=len(df_components_tmp)),
                         options=options_list,
                         key="component_selector",
                         on_change=_on_component_change,
@@ -3405,9 +3405,9 @@ if current_page == t("page_analyse"):
                     if selected_component:
                         ticker_from_index = selected_component.split(" — ")[0].strip()
                 else:
-                    st.info("⚠️ Aucune donnée. Allez dans ⚙️ Configuration.")
+                    st.info(t("analyse_no_index"))
             else:
-                st.selectbox("Composant", options=["— choisir un indice d'abord —"],
+                st.selectbox(t("analyse_composant_label", n=0), options=[t("analyse_choose_index")],
                              key="component_selector", disabled=True)
 
         # Ligne 2 : Indice | Bouton | Ticker sélectionné — tous alignés horizontalement
@@ -3415,14 +3415,14 @@ if current_page == t("page_analyse"):
 
         with col_idx:
             selected_comp_label = st.selectbox(
-                "Choisir un indice / watchlist",
+                t("analyse_indice_label"),
                 options=all_index_options, index=0, key="sb_composants"
             )
             selected_comp_key = all_index_keys_map[all_index_options.index(selected_comp_label)]
 
         with col_btn:
             st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
-            btn_analyser = st.button("🚀 Lancer l'Analyse", type="primary", use_container_width=True)
+            btn_analyser = st.button(t("analyse_launch_btn"), type="primary", use_container_width=True)
 
         with col_info:
             # Résolution : le dernier widget modifié gagne (tracé via _ticker_source)
@@ -3437,7 +3437,7 @@ if current_page == t("page_analyse"):
                 ticker_input = "AAPL"
             st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
             st.markdown(
-                f"Ticker sélectionné : <strong style='color:#4C9BE8;font-size:1rem'>{ticker_input}</strong>",
+                f"{t('analyse_ticker_selected_html')} <strong style='color:#4C9BE8;font-size:1rem'>{ticker_input}</strong>",
                 unsafe_allow_html=True
             )
 
@@ -3454,11 +3454,11 @@ if current_page == t("page_analyse"):
         try:
             hist = get_history(ticker_input, period)
             if hist.empty:
-                st.error("Données introuvables pour ce ticker.")
+                st.error(t("analyse_data_not_found"))
                 st.session_state.individuel_result = None
             else:
                 df_reg, std_dev, sigma_pos = compute_regression(hist)
-                with st.spinner("Chargement des données fondamentales…"):
+                with st.spinner(t("analyse_loading_fundamentals")):
                     f = compute_fundamentals(ticker_input)
                 st.session_state.individuel_result = {
                     "ticker":       ticker_input,
@@ -3469,7 +3469,7 @@ if current_page == t("page_analyse"):
                     "f":            f,
                 }
         except Exception as e:
-            st.error(f"Erreur : {e}")
+            st.error(t("analyse_error", e=e))
             st.session_state.individuel_result = None
 
     st.markdown("<div style='margin-top:-12px'></div>", unsafe_allow_html=True)
@@ -3529,7 +3529,7 @@ if current_page == t("page_analyse"):
         with gph_right:
             current_period_label = res.get("period_label", period_disp)
             new_period_label = st.selectbox(
-                "Période",
+                t("chart_period_label"),
                 options=list(PERIODS.keys()),
                 index=list(PERIODS.keys()).index(current_period_label) if current_period_label in PERIODS else
                       list(PERIODS.values()).index(res['period']) if res['period'] in PERIODS.values() else 6,
@@ -3542,13 +3542,13 @@ if current_page == t("page_analyse"):
 
             # Contrôle échelle Y
             yaxis_choice = st.radio(
-                "Échelle Y",
-                options=["Linéaire", "Logarithmique"],
+                t("chart_yaxis_label"),
+                options=[t("chart_yaxis_linear"), t("chart_yaxis_log")],
                 index=0 if st.session_state.chart_yaxis_type == "linear" else 1,
                 key="yaxis_type_radio",
-                help="Linéaire : valeurs absolues  |  Logarithmique : mieux adapté aux grandes périodes",
+                help=t("chart_yaxis_help"),
             )
-            st.session_state.chart_yaxis_type = "linear" if yaxis_choice == "Linéaire" else "log"
+            st.session_state.chart_yaxis_type = "linear" if yaxis_choice == t("chart_yaxis_linear") else "log"
 
             _is_log = (st.session_state.chart_yaxis_type == "log")
 
@@ -3556,18 +3556,17 @@ if current_page == t("page_analyse"):
 
             # Contrôle mode affichage — forcé "Cours" si échelle logarithmique
             display_choice = st.radio(
-                "Affichage Y",
-                options=["Cours", "Variation %"],
+                t("chart_display_label"),
+                options=[t("chart_display_cours"), t("chart_display_pct")],
                 index=0,  # forcé à 0 si log, sinon état courant
                 key="display_mode_radio",
-                help="Cours : prix brut  |  Variation % : performance depuis le début de la période"
-                     + ("  ⚠️ Désactivé en échelle logarithmique" if _is_log else ""),
+                help=t("chart_display_help") + (t("chart_display_log_disabled") if _is_log else ""),
                 disabled=_is_log,
             )
             if _is_log:
                 st.session_state.chart_display_mode = "cours"
             else:
-                st.session_state.chart_display_mode = "cours" if display_choice == "Cours" else "pct"
+                st.session_state.chart_display_mode = "cours" if display_choice == t("chart_display_cours") else "pct"
 
         if new_period != res['period']:
             try:
@@ -3617,7 +3616,7 @@ if current_page == t("page_analyse"):
             tc_col1, tc_col2 = st.columns([6, 1])
 
             with tc_col2:
-                st.markdown("**Période**")
+                st.markdown(t("tc_period_section"))
                 tc_period_label = st.selectbox(
                     "Période AT",
                     options=list(PERIODS.keys()),
@@ -3629,7 +3628,7 @@ if current_page == t("page_analyse"):
                 )
                 _tc_period_raw = PERIODS[tc_period_label]
 
-                st.markdown("**Granularité**")
+                st.markdown(t("tc_granularity_section"))
                 _TC_INTERVALS = {
                     "1 min":   "1m",
                     "2 min":   "2m",
@@ -3668,36 +3667,36 @@ if current_page == t("page_analyse"):
                 else:
                     _tc_period = _tc_period_raw
 
-                st.markdown("**Indicateurs**")
-                tc_show_ma      = st.checkbox("Moyennes mobiles", value=True,  key="tc_show_ma")
-                tc_show_bb      = st.checkbox("Bollinger", value=False, key="tc_show_bb")
-                tc_show_rsi     = st.checkbox("RSI", value=False, key="tc_show_rsi")
-                tc_show_volume  = st.checkbox("Volume", value=False, key="tc_show_volume")
+                st.markdown(t("tc_indicators_section"))
+                tc_show_ma      = st.checkbox(t("tc_ma_label"), value=True,  key="tc_show_ma")
+                tc_show_bb      = st.checkbox(t("tc_bb_label"), value=False, key="tc_show_bb")
+                tc_show_rsi     = st.checkbox(t("tc_rsi_label"), value=False, key="tc_show_rsi")
+                tc_show_volume  = st.checkbox(t("tc_volume_label"), value=False, key="tc_show_volume")
 
                 if tc_show_ma:
-                    st.markdown("**Périodes MM**")
+                    st.markdown(t("tc_ma_periods_section"))
                     tc_ma1 = st.number_input("MM 1", value=9,   min_value=1, max_value=500, key="tc_ma1", label_visibility="collapsed")
                     tc_ma2 = st.number_input("MM 2", value=20,  min_value=1, max_value=500, key="tc_ma2", label_visibility="collapsed")
                     tc_ma3 = st.number_input("MM 3", value=200, min_value=1, max_value=500, key="tc_ma3", label_visibility="collapsed")
                     st.caption(f"MM {int(tc_ma1)} / {int(tc_ma2)} / {int(tc_ma3)}")
 
                 if tc_show_bb:
-                    tc_bb_period = st.number_input("Période BB", value=20, min_value=5, max_value=100, key="tc_bb_period")
-                    tc_bb_std    = st.number_input("Écart-type BB", value=2.0, min_value=0.5, max_value=4.0, step=0.5, key="tc_bb_std")
+                    tc_bb_period = st.number_input(t("tc_bb_period_label"), value=20, min_value=5, max_value=100, key="tc_bb_period")
+                    tc_bb_std    = st.number_input(t("tc_bb_std_label"), value=2.0, min_value=0.5, max_value=4.0, step=0.5, key="tc_bb_std")
 
-                st.markdown("**Options**")
+                st.markdown(t("tc_options_section"))
                 tc_hide_gaps = st.checkbox(
-                    "Masquer sauts",
+                    t("tc_hide_gaps_label"),
                     value=True,
                     key="tc_hide_gaps",
-                    help="Supprime les trous sur l'axe X correspondant aux plages où le marché est clos (nuits, weekends, jours fériés)"
+                    help=t("tc_hide_gaps_help")
                 )
 
             with tc_col1:
                 try:
                     _tc_hist = get_history_intraday(ticker_disp, _tc_period, _tc_interval)
                     if _tc_hist.empty:
-                        st.warning("Pas de données disponibles pour ce ticker.")
+                        st.warning(t("tc_no_data"))
                     else:
                         # Nettoyage colonnes (MultiIndex possible avec yfinance)
                         if isinstance(_tc_hist.columns, pd.MultiIndex):
@@ -3873,13 +3872,14 @@ if current_page == t("page_analyse"):
                         st.plotly_chart(fig_tc, use_container_width=True)
 
                 except Exception as _e:
-                    st.error(f"Erreur chargement graphique technique : {_e}")
+                    st.error(t("tc_chart_err", e=_e))
 
         st.divider()
         # ── Prix Juste Historique ──────────────────────────────────
         with st.expander("💰 Prix Juste Historique", expanded=False):
             fv_methods = ["DCF", "Multiples (P/E)", "Gordon-Shapiro (DDM)", "ANR (Book Value)"]
-            fv_gran_opts = {"Mensuelle": "1mo", "Hebdomadaire": "1wk", "Annuelle": "1y"}
+            fv_gran_opts_fr = {"Mensuelle": "1mo", "Hebdomadaire": "1wk", "Annuelle": "1y"}
+            fv_gran_opts = {t("fv_gran_monthly"): "1mo", t("fv_gran_weekly"): "1wk", t("fv_gran_yearly"): "1y"}
 
             # ── Calcul de la méthode suggérée (avant les widgets) ──
             _info_fv = res["f"]["info"]
@@ -3942,13 +3942,13 @@ if current_page == t("page_analyse"):
                 _default_idx = fv_methods.index(_suggested_method) if _use_auto else \
                                st.session_state.get("fv_method_idx", 0)
                 fv_method = st.selectbox(
-                    "Méthode de valorisation", fv_methods,
+                    t("fv_method_label"), fv_methods,
                     index=fv_methods.index(_suggested_method) if _use_auto else 0,
                     key="fv_method",
                     disabled=_use_auto,
                 )
             with fv_c2:
-                fv_gran_label = st.selectbox("Granularité", list(fv_gran_opts.keys()),
+                fv_gran_label = st.selectbox(t("fv_granularity_label"), list(fv_gran_opts.keys()),
                                              index=0, key="fv_gran")
                 fv_gran = fv_gran_opts[fv_gran_label]
             with fv_c3:
@@ -3962,13 +3962,13 @@ if current_page == t("page_analyse"):
                 )
                 fv_period = PERIODS[fv_period_label]
             with fv_c4:
-                fv_overlay = st.checkbox("Superposer le cours réel", value=True,
+                fv_overlay = st.checkbox(t("fv_overlay_label"), value=True,
                                          key="fv_overlay")
                 fv_use_auto = st.checkbox(
-                    "Méthode automatique",
+                    t("fv_auto_label"),
                     value=False,
                     key="fv_use_auto",
-                    help=f"Sélectionne automatiquement : {_suggested_method}"
+                    help=t("fv_auto_help", method=_suggested_method)
                 )
 
             # Si méthode auto cochée, forcer la méthode suggérée
@@ -3979,7 +3979,7 @@ if current_page == t("page_analyse"):
             st.markdown(
                 f'<div style="background:rgba(76,155,232,0.08);border-left:3px solid #4C9BE8;'
                 f'border-radius:6px;padding:8px 12px;margin:4px 0 8px 0;font-size:0.83rem;color:#ccc;">'
-                f'{_suggested_icon} <strong>Méthode suggérée : {_suggested_method}</strong><br>'
+                f'{_suggested_icon} <strong>{t("fv_suggested")} {_suggested_method}</strong><br>'
                 f'{_suggested_reason}'
                 f'</div>',
                 unsafe_allow_html=True
@@ -4011,15 +4011,11 @@ if current_page == t("page_analyse"):
 
             # Paramètres ajustables selon la méthode
             with st.expander("⚙️ Paramètres avancés", expanded=False):
-                st.caption(
-                    "Les paramètres grisés ne s'appliquent pas à la méthode sélectionnée. "
-                    "Les valeurs par défaut sont estimées automatiquement d'après le beta, "
-                    "la dette et le secteur du titre."
-                )
+                st.caption(t("fv_adv_params_caption"))
                 p_c1, p_c2, p_c3, p_c4 = st.columns(4)
                 with p_c1:
                     fv_wacc = st.number_input(
-                        "WACC k (%)", min_value=1.0, max_value=30.0,
+                        t("fv_wacc_label"), min_value=1.0, max_value=30.0,
                         value=_wacc_auto, step=0.5, key="fv_wacc",
                         disabled=_dcf_only,
                     ) / 100
@@ -4027,12 +4023,12 @@ if current_page == t("page_analyse"):
                         f"<small style='color:#888'>📌 Estimé : {_wacc_auto}%<br>"
                         f"β={_beta:.2f} · Dette/FCF={_debt:.1f}<br>"
                         f"Secteur : {_info_fv.get('sector','?')}<br>"
-                        "⚠️ DCF uniquement</small>",
+                        f"{t('fv_dcf_only')}</small>",
                         unsafe_allow_html=True
                     )
                 with p_c2:
                     fv_g_perp = st.number_input(
-                        "Croissance perpétuelle g (%)", min_value=0.0, max_value=5.0,
+                        t("fv_g_label"), min_value=0.0, max_value=5.0,
                         value=_g_auto, step=0.25, key="fv_g_perp",
                         disabled=_dcf_only,
                     ) / 100
@@ -4040,12 +4036,12 @@ if current_page == t("page_analyse"):
                         f"<small style='color:#888'>📌 Estimé : {_g_auto}%<br>"
                         f"Secteur : {_info_fv.get('sector','?')}<br>"
                         "Doit rester &lt; WACC<br>"
-                        "⚠️ DCF uniquement</small>",
+                        f"{t('fv_dcf_only')}</small>",
                         unsafe_allow_html=True
                     )
                 with p_c3:
                     fv_k_gs = st.number_input(
-                        "Rendement exigé Gordon (%)", min_value=1.0, max_value=20.0,
+                        t("fv_k_gs_label"), min_value=1.0, max_value=20.0,
                         value=_k_gs_auto, step=0.5, key="fv_k_gs",
                         disabled=_gordon_only,
                     ) / 100
@@ -4053,12 +4049,12 @@ if current_page == t("page_analyse"):
                         f"<small style='color:#888'>📌 Estimé : {_k_gs_auto}%<br>"
                         "Légèrement &gt; WACC<br>"
                         "Doit être &gt; g dividende<br>"
-                        "⚠️ Gordon-Shapiro uniquement</small>",
+                        f"{t('fv_gordon_only')}</small>",
                         unsafe_allow_html=True
                     )
                 with p_c4:
                     fv_horizon = st.number_input(
-                        "Horizon DCF (ans)", min_value=3, max_value=20,
+                        t("fv_horizon_label"), min_value=3, max_value=20,
                         value=10, step=1, key="fv_horizon",
                         disabled=_dcf_only,
                     )
@@ -4067,12 +4063,12 @@ if current_page == t("page_analyse"):
                         "5 ans → cycliques<br>"
                         "10 ans → standard<br>"
                         "15–20 ans → forte croissance<br>"
-                        "⚠️ DCF uniquement</small>",
+                        f"{t('fv_dcf_only')}</small>",
                         unsafe_allow_html=True
                     )
 
             # Calcul
-            with st.spinner("Calcul du prix juste…"):
+            with st.spinner(t("fv_calc_spinner")):
                 df_fv = compute_fair_value_history(
                     ticker_disp, fv_period, fv_method, fv_gran,
                     fv_wacc, fv_g_perp, fv_k_gs, int(fv_horizon)
@@ -4761,7 +4757,7 @@ elif current_page == t("page_comparaison"):
             st.markdown("**Sélectionner les actions à comparer**")
             manual_tickers_raw = st.text_input("Tickers manuels (séparés par des virgules)", value="^GSPC, ^NDX",
                                                label_visibility="collapsed",
-                                               placeholder="ex : AAPL, MC.PA, ^GSPC…")
+                                               placeholder=t("comp_ticker_ph"))
             manual_tickers = [t.strip().upper() for t in manual_tickers_raw.split(",") if t.strip()]
         with row1_col2:
             st.markdown("**📅 Horizon temporel**")
@@ -4778,8 +4774,8 @@ elif current_page == t("page_comparaison"):
         with row2_col1:
             if full_options:
                 selected_from_index = st.multiselect(
-                    "Ajouter depuis les indices / watchlists chargés", options=full_options, default=[],
-                    help="Les lignes '── Sélectionner tout : … ──' ajoutent toutes les actions. Les entrées ⭐ sont vos watchlists."
+                    t("comp_add_from_index"), options=full_options, default=[],
+                    help=t("comp_add_from_index_help")
                 )
                 expanded = []
                 for sel in selected_from_index:
@@ -4799,7 +4795,7 @@ elif current_page == t("page_comparaison"):
     st.divider()
 
     if btn_compare and compare_tickers:
-        with st.spinner("Chargement des données de marché…"):
+        with st.spinner(t("comp_load_spinner")):
             price_data, errors = {}, []
             for tkr in compare_tickers:
                 try:
@@ -4808,7 +4804,7 @@ elif current_page == t("page_comparaison"):
                     else: errors.append(tkr)
                 except: errors.append(tkr)
 
-            if errors: st.warning(f"Données introuvables pour : {', '.join(errors)}")
+            if errors: st.warning(t("comp_errors", tickers=", ".join(errors)))
 
             if price_data:
                 for tkr in list(price_data.keys()):
@@ -4866,8 +4862,8 @@ elif current_page == t("page_comparaison"):
 
         st.subheader("📋 Tableau de performance")
         k1, k2, _ = st.columns([1,1,4])
-        with k1: st.metric("🥇 Meilleure valeur",   df_perf.iloc[0]["Ticker"], delta=f"{df_perf.iloc[0]['_perf_raw']:+.1f}%")
-        with k2: st.metric("📉 Moins bonne valeur", df_perf.iloc[-1]["Ticker"], delta=f"{df_perf.iloc[-1]['_perf_raw']:+.1f}%")
+        with k1: st.metric(t("comp_best"),   df_perf.iloc[0]["Ticker"], delta=f"{df_perf.iloc[0]['_perf_raw']:+.1f}%")
+        with k2: st.metric(t("comp_worst"), df_perf.iloc[-1]["Ticker"], delta=f"{df_perf.iloc[-1]['_perf_raw']:+.1f}%")
 
         # ── Tableau interactif avec colonnes WL + Analyser ─────────
         _active_wl_comp = st.session_state.get("active_watchlist", "Ma Watchlist")
@@ -4930,17 +4926,17 @@ elif current_page == t("page_screener_sigma"):
         left_col, right_col = st.columns([1, 1], gap="large")
 
         with left_col:
-            sigma_period_label = st.selectbox("📅 Période d'analyse", options=list(PERIODS.keys()), index=4, key="sigma_period")
+            sigma_period_label = st.selectbox(t("screener_sigma_period_label"), options=list(PERIODS.keys()), index=4, key="sigma_period")
             sigma_period = PERIODS[sigma_period_label]
 
             sigma_index_options = [k for k in all_data_extended if not all_data_extended[k].empty]
             if sigma_index_options:
                 sigma_index_labels = [get_label_extended(k) for k in sigma_index_options]
                 sigma_index_label = st.selectbox(
-                    "📂 Indice / Watchlist à scanner",
+                    t("screener_sigma_index_label"),
                     options=sigma_index_labels,
                     key="sigma_index",
-                    help="Les entrées ⭐ correspondent à vos watchlists"
+                    help=t("screener_sigma_index_help")
                 )
                 sigma_index_key = sigma_index_options[sigma_index_labels.index(sigma_index_label)]
             else:
@@ -4948,7 +4944,7 @@ elif current_page == t("page_screener_sigma"):
                 sigma_index_key = None
 
         with right_col:
-            st.markdown("**🎯 Zones à rechercher** *(cochez une ou plusieurs zones)*")
+            st.markdown(t("screener_sigma_zones_title"))
             selected_criteria = []
             for idx_z, zone_key in enumerate(SIGMA_CRITERIA):
                 z_min, z_max, z_psycho = SIGMA_CRITERIA[zone_key]
@@ -4970,13 +4966,13 @@ elif current_page == t("page_screener_sigma"):
         zones_label = ", ".join(zk.split("(")[0].strip() for zk in selected_criteria)
         st.info(f"🔄 Scan de **{total}** actions de **{get_label_extended(sigma_index_key)}** sur **{sigma_period_label}** — zones : **{zones_label}**")
 
-        progress_bar  = st.progress(0, text="Initialisation…")
+        progress_bar  = st.progress(0, text=t("screener_sigma_init"))
         results_found = []
         errors_scan   = []
 
         for i, row in df_index.iterrows():
             tkr, company = row["Ticker"], row["Company"]
-            progress_bar.progress((list(df_index.index).index(i)+1)/total, text=f"Analyse {tkr}…")
+            progress_bar.progress((list(df_index.index).index(i)+1)/total, text=t("screener_sigma_analyse_progress", ticker=tkr))
             try:
                 hist = get_history(tkr, sigma_period)
                 if hist.empty or len(hist) < 20: continue
@@ -5001,7 +4997,7 @@ elif current_page == t("page_screener_sigma"):
             st.caption(f"⚠️ Données indisponibles : {', '.join(errors_scan[:10])}{'…' if len(errors_scan)>10 else ''}")
 
         if not results_found:
-            st.warning("Aucune action trouvée pour les zones sélectionnées.")
+            st.warning(t("screener_sigma_no_result"))
             st.session_state.sigma_result = None
         else:
             results_found.sort(key=lambda r: r["sigma_pos"], reverse=True)
@@ -5016,7 +5012,7 @@ elif current_page == t("page_screener_sigma"):
         results_found = res_s["results_found"]
         period_lbl    = res_s["period_label"]
 
-        st.success(f"✅ **{len(results_found)} action(s) trouvée(s)**  •  {res_s['index_label']}  •  {period_lbl}")
+        st.success(t("screener_sigma_found", n=len(results_found), index=res_s["index_label"], period=period_lbl))
 
         def fmtv_s(v, u="", dec=1):
             return f"{v:.{dec}f}{u}" if v is not None and not (isinstance(v, float) and np.isnan(v)) else "N/A"
@@ -5037,7 +5033,7 @@ elif current_page == t("page_screener_sigma"):
                 "⭐ WL":        r["ticker"].upper() in wl_tickers_set_sig,
             })
         df_sig_editor = pd.DataFrame(sig_editor_data)
-        st.caption("💡 Cochez **📈 Analyser** pour lancer l'analyse · Cochez **⭐ WL** pour ajouter/retirer de la watchlist")
+        st.caption(t("screener_sigma_tip"))
         edited_sig = st.data_editor(
             df_sig_editor,
             use_container_width=True,
@@ -5045,13 +5041,13 @@ elif current_page == t("page_screener_sigma"):
             key="sig_editor",
             column_config={
                 "Ticker":      st.column_config.TextColumn("Ticker", disabled=True, width="small"),
-                "Société":     st.column_config.TextColumn("Société", disabled=True),
-                "Position σ":  st.column_config.TextColumn("Position σ", disabled=True, width="small"),
-                "ROE":         st.column_config.TextColumn("ROE", disabled=True, width="small"),
-                "Zone":        st.column_config.TextColumn("Zone", disabled=True),
-                "Psychologie": st.column_config.TextColumn("Psychologie", disabled=True),
-                "📈 Analyser": st.column_config.CheckboxColumn("📈 Analyser", help="Cochez pour lancer l'analyse de ce ticker", width="small"),
-                "⭐ WL":       st.column_config.CheckboxColumn("⭐ WL", help="Ajouter/retirer de la watchlist", width="small"),
+                t("screener_sigma_col_company"): st.column_config.TextColumn(t("screener_sigma_col_company"), disabled=True),
+                t("screener_sigma_col_sigma"): st.column_config.TextColumn(t("screener_sigma_col_sigma"), disabled=True, width="small"),
+                t("screener_sigma_col_roe"): st.column_config.TextColumn(t("screener_sigma_col_roe"), disabled=True, width="small"),
+                t("screener_sigma_col_zone"): st.column_config.TextColumn(t("screener_sigma_col_zone"), disabled=True),
+                t("screener_sigma_col_psycho"): st.column_config.TextColumn(t("screener_sigma_col_psycho"), disabled=True),
+                "📈 Analyser": st.column_config.CheckboxColumn(t("screener_sigma_col_analyse"), help=t("screener_sigma_analyse_help"), width="small"),
+                "⭐ WL":       st.column_config.CheckboxColumn(t("screener_sigma_col_wl"), help=t("screener_sigma_wl_help"), width="small"),
             },
         )
         # Traitement des cases cochées
@@ -5065,32 +5061,32 @@ elif current_page == t("page_screener_sigma"):
         _check_wl_toggle(edited_sig, "prev_wl_sig", "Ticker", "Société", "⭐ WL")
 
         st.divider()
-        st.subheader(f"📈 Graphiques — {len(results_found)} action(s)")
+        st.subheader(t("screener_sigma_charts", n=len(results_found)))
 
         # ── Contrôles d'échelle pour les graphiques du screener sigma ──
         sig_ctrl1, sig_ctrl2, sig_ctrl3 = st.columns([2, 2, 6])
         with sig_ctrl1:
             sig_yaxis = st.radio(
-                "Échelle Y", ["Linéaire", "Logarithmique"],
+                t("chart_yaxis_label"), [t("chart_yaxis_linear"), t("chart_yaxis_log")],
                 index=0 if st.session_state.chart_yaxis_type == "linear" else 1,
                 key="sig_yaxis_radio",
-                help="Linéaire ou logarithmique",
+                help=t("chart_yaxis_help_short"),
             )
-            st.session_state.chart_yaxis_type = "linear" if sig_yaxis == "Linéaire" else "log"
+            st.session_state.chart_yaxis_type = "linear" if sig_yaxis == t("chart_yaxis_linear") else "log"
         with sig_ctrl2:
             _log_mode = (st.session_state.chart_yaxis_type == "log")
             sig_disp = st.radio(
-                "Affichage Y", ["Cours", "Variation %"],
+                t("chart_display_label"), [t("chart_display_cours"), t("chart_display_pct")],
                 index=0,  # forcé à Cours si log
                 key="sig_disp_radio",
-                help="Cours brut ou variation en % — Variation % indisponible en échelle logarithmique",
+                help=t("chart_display_help_short"),
                 disabled=_log_mode,
             )
             if _log_mode:
                 st.session_state.chart_display_mode = "cours"
                 st.caption("⚠️ Variation % incompatible avec l'échelle log")
             else:
-                st.session_state.chart_display_mode = "cours" if sig_disp == "Cours" else "pct"
+                st.session_state.chart_display_mode = "cours" if sig_disp == t("chart_display_cours") else "pct"
 
         for r in results_found:
             df_chart, _, sigma_pos_r = compute_regression(r["hist"])
@@ -5129,8 +5125,7 @@ elif current_page == t("page_screener_sigma"):
             st.plotly_chart(_fig_sig, use_container_width=True)
     else:
         if not btn_scan:
-            st.info("👆 Cochez au moins une zone puis cliquez sur **🔍 Lancer le scan**." if not selected_criteria
-                    else "👆 Cliquez sur **🔍 Lancer le scan** pour démarrer l'analyse.")
+            st.info(t("screener_sigma_select_zone") if not selected_criteria else t("screener_sigma_click_to_start"))
 
 
 # ============================================================
@@ -5138,7 +5133,7 @@ elif current_page == t("page_screener_sigma"):
 # ============================================================
 elif current_page == t("page_screener_multi"):
     st.title(t("screener_multi_title"))
-    st.markdown("Combinez critères **fondamentaux** et **position sigma** pour identifier les meilleures opportunités.")
+    st.markdown(t("screener_multi_desc"))
 
     # ── CSS encarts avec bordure arrondie bleue ────────────────
     st.markdown("""
@@ -5161,17 +5156,17 @@ elif current_page == t("page_screener_multi"):
         # ── Colonne 1 : Paramètres de scan ────────────────────────
         with sc_col1:
             st.markdown('<div class="scr-card"><div class="scr-card-title">🗂️ Paramètres de scan</div>', unsafe_allow_html=True)
-            scr_period_label = st.selectbox("Période d'analyse", options=list(PERIODS.keys()), index=4, key="scr_period")
+            scr_period_label = st.selectbox(t("screener_multi_period_label"), options=list(PERIODS.keys()), index=4, key="scr_period")
             scr_period = PERIODS[scr_period_label]
 
             scr_index_opts = [k for k in all_data_extended if not all_data_extended[k].empty]
             if scr_index_opts:
                 scr_index_labels = [get_label_extended(k) for k in scr_index_opts]
                 scr_index_label  = st.selectbox(
-                    "Indice / Watchlist à scanner",
+                    t("screener_multi_index_label"),
                     options=scr_index_labels,
                     key="scr_index",
-                    help="Les entrées ⭐ correspondent à vos watchlists"
+                    help=t("screener_multi_index_help")
                 )
                 scr_index_key = scr_index_opts[scr_index_labels.index(scr_index_label)]
             else:
@@ -5185,7 +5180,7 @@ elif current_page == t("page_screener_multi"):
                                      disabled=(scr_index_key is None))
             if st.button("↺ Réinitialiser les filtres", key="scr_reset",
                          use_container_width=True,
-                         help="Remet tous les curseurs à leurs valeurs par défaut"):
+                         help=t("screener_multi_reset_help")):
                 for k, v in [("f_rev", 5), ("f_roic", 10), ("f_fcfm", 5),
                               ("f_debt", 5), ("f_score", 5.0)]:
                     st.session_state[k] = v
@@ -5194,11 +5189,11 @@ elif current_page == t("page_screener_multi"):
         # ── Colonne 2 : Filtres fondamentaux ──────────────────────
         with sc_col2:
             st.markdown('<div class="scr-card"><div class="scr-card-title">📊 Filtres fondamentaux</div>', unsafe_allow_html=True)
-            f_rev_min   = st.slider("Croissance CA min (%)",  -20, 50,   5, key="f_rev")
-            f_roic_min  = st.slider("ROIC min (%)",             0, 40,  10, key="f_roic")
-            f_fcfm_min  = st.slider("Marge FCF min (%)",        0, 40,   5, key="f_fcfm")
-            f_debt_max  = st.slider("Dette/FCF max",             0, 20,   5, key="f_debt")
-            f_score_min = st.slider("Score global min (/10)",  0.0, 10.0, 5.0, step=0.5, key="f_score")
+            f_rev_min   = st.slider(t("screener_multi_rev_min"),  -20, 50,   5, key="f_rev")
+            f_roic_min  = st.slider(t("screener_multi_roic_min"),             0, 40,  10, key="f_roic")
+            f_fcfm_min  = st.slider(t("screener_multi_fcfm_min"),        0, 40,   5, key="f_fcfm")
+            f_debt_max  = st.slider(t("screener_multi_debt_max"),             0, 20,   5, key="f_debt")
+            f_score_min = st.slider(t("screener_multi_score_min"),  0.0, 10.0, 5.0, step=0.5, key="f_score")
             st.markdown('</div>', unsafe_allow_html=True)
 
         # ── Colonne 3 : Filtres sigma ──────────────────────────────
@@ -5221,13 +5216,13 @@ elif current_page == t("page_screener_multi"):
         total    = len(df_index)
         st.info(f"🔄 Scan de **{total}** actions de **{get_label_extended(scr_index_key)}** — chargement des données…")
 
-        progress_bar = st.progress(0, text="Initialisation…")
+        progress_bar = st.progress(0, text=t("screener_multi_init"))
         all_raw      = []   # toutes les données brutes, sans filtrage
         scr_errors   = []
 
         for i, row in df_index.iterrows():
             tkr, company = row["Ticker"], row["Company"]
-            progress_bar.progress((list(df_index.index).index(i)+1)/total, text=f"Analyse {tkr}…")
+            progress_bar.progress((list(df_index.index).index(i)+1)/total, text=t("screener_multi_progress", ticker=tkr))
             try:
                 hist = get_history(tkr, scr_period)
                 if hist.empty or len(hist) < 20: continue
@@ -5285,9 +5280,7 @@ elif current_page == t("page_screener_multi"):
 
         scr_results.sort(key=lambda r: (r["score"], r["sigma_pos"]), reverse=True)
 
-        st.success(f"✅ **{len(scr_results)} action(s)** correspondent à vos critères  •  "
-                   f"{res_scr['index_label']}  •  {period_lbl}  •  "
-                   f"*{len(all_raw)} données chargées — filtrage en temps réel*")
+        st.success(t("screener_multi_found", n=len(scr_results), index=res_scr["index_label"], period=period_lbl, total=len(all_raw)))
 
         def fmtv(v, u="", dec=1):
             return f"{v:.{dec}f}{u}" if v is not None and not (isinstance(v, float) and np.isnan(v)) else "N/A"
@@ -5314,7 +5307,7 @@ elif current_page == t("page_screener_multi"):
                 "⭐ WL":        r["ticker"].upper() in wl_tickers_set_scr,
             })
         df_scr_editor = pd.DataFrame(scr_editor_data)
-        st.caption("💡 Cochez **📈 Analyser** pour lancer l'analyse · Cochez **⭐ WL** pour ajouter/retirer de la watchlist")
+        st.caption(t("screener_sigma_tip"))
         edited_scr = st.data_editor(
             df_scr_editor,
             use_container_width=True,
@@ -5348,26 +5341,26 @@ elif current_page == t("page_screener_multi"):
         _check_wl_toggle(edited_scr, "prev_wl_scr", "Ticker", "Société", "⭐ WL")
 
         st.divider()
-        st.subheader(f"📈 Graphiques — {len(scr_results)} action(s) sélectionnée(s)")
+        st.subheader(t("screener_multi_charts_title", n=len(scr_results)))
 
         # ── Contrôles d'échelle pour les graphiques du screener multi ──
         scr_ctrl1, scr_ctrl2, scr_ctrl3 = st.columns([2, 2, 6])
         with scr_ctrl1:
             scr_yaxis = st.radio(
-                "Échelle Y", ["Linéaire", "Logarithmique"],
+                t("chart_yaxis_label"), [t("chart_yaxis_linear"), t("chart_yaxis_log")],
                 index=0 if st.session_state.chart_yaxis_type == "linear" else 1,
                 key="scr_yaxis_radio",
-                help="Linéaire ou logarithmique",
+                help=t("chart_yaxis_help_short"),
             )
-            st.session_state.chart_yaxis_type = "linear" if scr_yaxis == "Linéaire" else "log"
+            st.session_state.chart_yaxis_type = "linear" if scr_yaxis == t("chart_yaxis_linear") else "log"
         with scr_ctrl2:
             scr_disp = st.radio(
-                "Affichage Y", ["Cours", "Variation %"],
+                t("chart_display_label"), [t("chart_display_cours"), t("chart_display_pct")],
                 index=0 if st.session_state.chart_display_mode == "cours" else 1,
                 key="scr_disp_radio",
-                help="Cours brut ou variation en %",
+                help=t("chart_display_help_scr"),
             )
-            st.session_state.chart_display_mode = "cours" if scr_disp == "Cours" else "pct"
+            st.session_state.chart_display_mode = "cours" if scr_disp == t("chart_display_cours") else "pct"
 
         for r in scr_results:
             df_chart, _, sigma_pos_r = compute_regression(r["hist"])
@@ -5389,7 +5382,7 @@ elif current_page == t("page_screener_multi"):
             )
     else:
         if not btn_screener:
-            st.info("👆 Configurez les filtres puis cliquez sur **🚀 Lancer le screener**.")
+            st.info(t("screener_multi_configure_first"))
 
 
 # ============================================================
@@ -5397,7 +5390,7 @@ elif current_page == t("page_screener_multi"):
 # ============================================================
 elif current_page == t("page_explications"):
     st.title("📖 Explications")
-    st.markdown("Comprendre chaque métrique utilisée dans les scorecards et le screener.")
+    st.markdown(t("explain_subtitle"))
 
     st.markdown("""
     <style>
