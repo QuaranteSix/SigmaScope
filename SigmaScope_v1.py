@@ -71,7 +71,7 @@ def load_wl_index(user_id: str = None, _creating: bool = False):
 def save_wl_index(names, user_id: str = None):
     if user_id is None:
         user_id = get_user_id()
-    existing = load_wl_index(user_id=user_id)
+    existing = load_wl_index(user_id=user_id, _creating=True)
     for name in names:
         if name not in existing:
             create_watchlist(name, user_id=user_id)
@@ -79,7 +79,7 @@ def save_wl_index(names, user_id: str = None):
 def create_watchlist(name: str, user_id: str = None):
     if user_id is None:
         user_id = get_user_id()
-    existing = load_wl_index(user_id=user_id, _creating=True)  # ← _creating=True
+    existing = load_wl_index(user_id=user_id, _creating=True)
     if name not in existing:
         supabase.table("watchlists").insert({"user_id": user_id, "name": name}).execute()
         existing.append(name)
@@ -720,6 +720,32 @@ SIGMA_CRITERIA = {
     "🔻   Zone de Transition Basse   (-1,25 à -1,75σ)":   (-1.75, -1.25, "Le pessimisme s'accentue avant l'excès."),
     "📉📉 Zone d'Excès Bas           (< -1,75σ)":          (-99.0, -1.75, 'Panique, zone de "soldes" statistiques.'),
 }
+
+# ============================================================
+# GET_LABEL — doit être défini AVANT la sidebar
+# ============================================================
+def get_label(key):
+    if key in INDICES_CONFIG:
+        return INDICES_CONFIG[key]["label"]
+    # Grands indices libres
+    if key == "Indice":
+        return "📊 Grands Indices"
+    # Custom / ETF / Crypto / Matières premières
+    if key == "@ETF@":
+        return "📦 ETF"
+    if key == "@Crypto@":
+        return "🪙 Crypto"
+    if key == "@Matière Première@":
+        return "🪨 Matières Premières"
+    # Indices français custom
+    if key == "SBF120":
+        return "SBF 120"
+    if key == "CACMID60":
+        return "CAC Mid 60"
+    if key == "CACSMAL" or key == "CACSMILL" or key == "CACSMAL" or key == "CACSMALL":
+        return "CAC Small"
+    return key
+
 # ============================================================
 # IMPORT PORTFOLIO PERFORMANCE XML
 # ============================================================
