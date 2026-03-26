@@ -2826,7 +2826,7 @@ if current_page == "🏠 Présentation":
         '<h1>SigmaScope</h1>'
         '<p class="tagline">La plateforme d\'analyse boursière quantitative tout-en-un<br>'
         'Régression log · Analyse fondamentale · Screener · Valorisation DCF</p>'
-        '<span class="version-badge">✨ Version 24 — par jp</span>'
+        '<span class="version-badge">✨ Version 1.0 — par jp</span>'
         '</div>',
         unsafe_allow_html=True
     )
