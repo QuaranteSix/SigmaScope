@@ -808,6 +808,124 @@ SIGMA_CRITERIA = {
 }
 
 # ============================================================
+# STATS D'UTILISATION — FONCTIONS SUPABASE
+# ============================================================
+
+def record_session_start(user_id: str = None):
+    """Enregistre le début d'une session utilisateur."""
+    if user_id is None:
+        user_id = get_user_id()
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        supabase.table("usage_sessions").insert({
+            "user_id":       user_id,
+            "session_start": now,
+        }).execute()
+        st.session_state["_session_start"] = now
+    except Exception:
+        pass
+
+def record_session_end(user_id: str = None):
+    """Met à jour la durée de la session en cours."""
+    if user_id is None:
+        user_id = get_user_id()
+    start_str = st.session_state.get("_session_start")
+    if not start_str:
+        return
+    try:
+        start  = datetime.fromisoformat(start_str)
+        end    = datetime.now(timezone.utc)
+        dur    = round((end - start).total_seconds() / 60, 1)
+        supabase.table("usage_sessions")            .update({"session_end": end.isoformat(), "duration_min": dur})            .eq("user_id", user_id)            .eq("session_start", start_str)            .execute()
+    except Exception:
+        pass
+
+def get_usage_stats() -> dict:
+    """Retourne les statistiques globales d'utilisation."""
+    try:
+        res_users = supabase.table("usage_sessions")            .select("user_id", count="exact").execute()
+        nb_sessions = res_users.count or 0
+
+        res_distinct = supabase.table("usage_sessions")            .select("user_id").execute()
+        distinct_users = len(set(r["user_id"] for r in res_distinct.data)) if res_distinct.data else 0
+
+        res_dur = supabase.table("usage_sessions")            .select("duration_min").not_.is_("duration_min", "null").execute()
+        durations = [r["duration_min"] for r in res_dur.data if r["duration_min"]]
+        avg_dur = round(sum(durations) / len(durations), 1) if durations else 0
+
+        return {
+            "nb_sessions":    nb_sessions,
+            "distinct_users": distinct_users,
+            "avg_duration":   avg_dur,
+        }
+    except Exception:
+        return {"nb_sessions": 0, "distinct_users": 0, "avg_duration": 0}
+
+def get_user_rating(user_id: str = None):
+    """Retourne la note et le vote SaaS de l'utilisateur, ou None."""
+    if user_id is None:
+        user_id = get_user_id()
+    try:
+        res = supabase.table("user_ratings")            .select("rating, vote_saas")            .eq("user_id", user_id).execute()
+        return res.data[0] if res.data else None
+    except Exception:
+        return None
+
+def save_user_rating(rating: int, vote_saas: bool, user_id: str = None):
+    """Sauvegarde ou met à jour la note de l'utilisateur."""
+    if user_id is None:
+        user_id = get_user_id()
+    try:
+        supabase.table("user_ratings").upsert({
+            "user_id":    user_id,
+            "rating":     rating,
+            "vote_saas":  vote_saas,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+        return True
+    except Exception:
+        return False
+
+def get_ratings_stats() -> dict:
+    """Retourne les statistiques globales de notation."""
+    try:
+        res = supabase.table("user_ratings").select("rating, vote_saas").execute()
+        if not res.data:
+            return {"nb_ratings": 0, "avg_rating": 0, "nb_saas_yes": 0, "nb_saas_no": 0}
+        ratings   = [r["rating"]   for r in res.data]
+        votes     = [r["vote_saas"] for r in res.data if r["vote_saas"] is not None]
+        return {
+            "nb_ratings":  len(ratings),
+            "avg_rating":  round(sum(ratings) / len(ratings), 1) if ratings else 0,
+            "nb_saas_yes": sum(1 for v in votes if v is True),
+            "nb_saas_no":  sum(1 for v in votes if v is False),
+        }
+    except Exception:
+        return {"nb_ratings": 0, "avg_rating": 0, "nb_saas_yes": 0, "nb_saas_no": 0}
+
+def get_feedback_messages(limit: int = 50) -> list:
+    """Retourne les derniers messages de feedback."""
+    try:
+        res = supabase.table("user_feedback")            .select("message, created_at")            .order("created_at", desc=True)            .limit(limit).execute()
+        return res.data or []
+    except Exception:
+        return []
+
+def save_feedback(message: str, user_id: str = None) -> bool:
+    """Sauvegarde un message de feedback."""
+    if user_id is None:
+        user_id = get_user_id()
+    try:
+        supabase.table("user_feedback").insert({
+            "user_id": user_id,
+            "message": message.strip(),
+        }).execute()
+        return True
+    except Exception:
+        return False
+
+
+# ============================================================
 # GET_LABEL — doit être défini AVANT la sidebar
 # ============================================================
 def get_label(key):
@@ -2605,9 +2723,10 @@ all_data_extended = get_all_data_with_watchlists(all_data)
 if "active_watchlist" not in st.session_state:
     st.session_state.active_watchlist = load_wl_index()[0]
 
-# ── Mettre à jour last_seen à chaque visite (anti-expiration 30j) ──
+# ── Mettre à jour last_seen + enregistrer session ──────────────
 if not st.session_state.get("_session_touched"):
     touch_user_session()
+    record_session_start()
     st.session_state["_session_touched"] = True
 
 if "wl_pending_action" not in st.session_state:
@@ -2952,6 +3071,115 @@ if current_page == "🏠 Présentation":
             )
 
     st.markdown("---")
+
+    # ── Expander 1 : Vie & statistiques d'utilisation ────────────
+    with st.expander("📊 Vie & statistiques de l'application", expanded=False):
+        stats_data   = get_usage_stats()
+        ratings_data = get_ratings_stats()
+
+        sc1, sc2, sc3, sc4, sc5 = st.columns(5)
+        metrics = [
+            ("👥", str(stats_data["distinct_users"]),  "Utilisateurs uniques"),
+            ("🔄", str(stats_data["nb_sessions"]),     "Sessions totales"),
+            ("⏱️", f"{stats_data['avg_duration']} min","Durée moy. session"),
+            ("⭐", f"{ratings_data['avg_rating']}/5",  f"{ratings_data['nb_ratings']} avis"),
+            ("🚀", f"{ratings_data['nb_saas_yes']} oui / {ratings_data['nb_saas_no']} non",
+                   "Vote migration site web"),
+        ]
+        for col, (icon, val, lbl) in zip([sc1, sc2, sc3, sc4, sc5], metrics):
+            col.markdown(
+                f'<div class="stat-badge">'
+                f'<div style="font-size:1.4rem;">{icon}</div>'
+                f'<div class="stat-num" style="font-size:1.3rem;">{val}</div>'
+                f'<div class="stat-lbl">{lbl}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown("---")
+        st.markdown("#### ⭐ Notez l'application")
+        existing = get_user_rating()
+        c_note, c_saas = st.columns(2)
+
+        with c_note:
+            current_rating = existing["rating"] if existing else 3
+            new_rating = st.radio(
+                "Votre note",
+                options=[1, 2, 3, 4, 5],
+                index=current_rating - 1,
+                horizontal=True,
+                format_func=lambda x: "⭐" * x,
+                key="pres_rating"
+            )
+
+        with c_saas:
+            current_vote = existing["vote_saas"] if existing else None
+            vote_options = [
+                "✅ Oui, convertir en vrai site web",
+                "❌ Non, l'app Streamlit me suffit"
+            ]
+            vote_idx = 0 if current_vote is True else 1 if current_vote is False else 0
+            new_vote_str = st.radio(
+                "Faut-il convertir SigmaScope en un vrai site web ?",
+                options=vote_options,
+                index=vote_idx,
+                key="pres_saas_vote"
+            )
+            new_vote = (new_vote_str == vote_options[0])
+
+        if st.button("💾 Enregistrer mon avis", key="pres_save_rating", type="primary"):
+            ok = save_user_rating(new_rating, new_vote)
+            if ok:
+                st.success(f"✅ Merci ! Note : {'⭐' * new_rating} — Vote SaaS : {'Oui' if new_vote else 'Non'}")
+                st.rerun()
+            else:
+                st.error("❌ Erreur lors de la sauvegarde.")
+
+    # ── Expander 2 : Suggestions d'amélioration ──────────────────
+    with st.expander("💬 Suggestions & améliorations", expanded=False):
+        st.markdown("#### 📝 Laisser un message")
+        st.caption("Vos suggestions sont anonymes et visibles par tous les utilisateurs.")
+
+        with st.form("form_feedback", clear_on_submit=True):
+            msg = st.text_area(
+                "Votre suggestion",
+                placeholder="Ex : Ajouter un indicateur MACD, améliorer la page screener...",
+                max_chars=500,
+                height=100,
+                label_visibility="collapsed"
+            )
+            submitted = st.form_submit_button("📤 Envoyer", type="primary")
+            if submitted:
+                if msg.strip():
+                    ok = save_feedback(msg)
+                    if ok:
+                        st.success("✅ Message envoyé, merci !")
+                    else:
+                        st.error("❌ Erreur lors de l'envoi.")
+                else:
+                    st.warning("⚠️ Le message ne peut pas être vide.")
+
+        st.markdown("---")
+        st.markdown("#### 💡 Suggestions de la communauté")
+        messages = get_feedback_messages(limit=30)
+        if messages:
+            for m in messages:
+                try:
+                    dt = datetime.fromisoformat(m["created_at"].replace("Z", "+00:00"))
+                    date_str = dt.strftime("%d/%m/%Y %H:%M")
+                except Exception:
+                    date_str = ""
+                st.markdown(
+                    f'<div style="background:#0d1b2a;border-radius:8px;padding:10px 14px;'
+                    f'margin-bottom:6px;border-left:3px solid #4C9BE8;">'
+                    f'<span style="color:#ddd;font-size:0.88rem;">{m["message"]}</span><br>'
+                    f'<span style="color:#556;font-size:0.72rem;">📅 {date_str}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+        else:
+            st.caption("Aucune suggestion pour l'instant — soyez le premier !")
+
     st.markdown(
         '<div style="text-align:center;color:#556;font-size:0.78rem;padding:8px 0;">'
         '⚡ SigmaScope utilise <strong style="color:#4C9BE8;">Yahoo Finance</strong> comme source de données · '
