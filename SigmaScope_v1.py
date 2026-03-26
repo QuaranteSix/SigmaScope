@@ -57,13 +57,13 @@ def _get_wl_id(name: str, user_id: str = None):
            .select("id").eq("user_id", user_id).eq("name", name).execute())
     return res.data[0]["id"] if res.data else None
 
-def load_wl_index(user_id: str = None):
+def load_wl_index(user_id: str = None, _creating: bool = False):
     if user_id is None:
         user_id = get_user_id()
     res = (supabase.table("watchlists")
            .select("name").eq("user_id", user_id).order("created_at").execute())
     names = [r["name"] for r in res.data] if res.data else []
-    if not names:
+    if not names and not _creating:
         create_watchlist("Ma Watchlist", user_id=user_id)
         return ["Ma Watchlist"]
     return names
@@ -79,7 +79,7 @@ def save_wl_index(names, user_id: str = None):
 def create_watchlist(name: str, user_id: str = None):
     if user_id is None:
         user_id = get_user_id()
-    existing = load_wl_index(user_id=user_id)
+    existing = load_wl_index(user_id=user_id, _creating=True)  # ← _creating=True
     if name not in existing:
         supabase.table("watchlists").insert({"user_id": user_id, "name": name}).execute()
         existing.append(name)
