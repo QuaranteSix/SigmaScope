@@ -68,11 +68,46 @@ except Exception as _e:
 # IDENTIFIANT UTILISATEUR ANONYME
 # ============================================================
 def get_user_id() -> str:
+    """
+    Retourne le token anonyme de l'utilisateur.
+    Généré à la première visite et stocké dans l'URL (?uid=...).
+    L'utilisateur doit conserver son URL/marque-page pour retrouver ses watchlists.
+    """
     uid = st.query_params.get("uid", None)
     if not uid:
         uid = str(_uuid.uuid4())
         st.query_params["uid"] = uid
     return uid
+
+def touch_user_session(user_id: str = None):
+    """
+    Met à jour last_seen pour toutes les watchlists de l'utilisateur.
+    Appelé à chaque visite pour réinitialiser le compteur d'expiration 30 jours.
+    """
+    if user_id is None:
+        user_id = get_user_id()
+    try:
+        supabase.table("watchlists")            .update({"last_seen": datetime.now(timezone.utc).isoformat()})            .eq("user_id", user_id).execute()
+    except Exception:
+        pass  # best-effort, on ne bloque pas l'app
+
+def purge_inactive_watchlists(days: int = 30):
+    """
+    Supprime les watchlists (+ leurs items via CASCADE) dont le last_seen
+    est plus vieux que `days` jours. À appeler depuis la page Configuration.
+    """
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        # Récupérer les IDs à supprimer
+        res = supabase.table("watchlists")            .select("id, user_id, name, last_seen")            .lt("last_seen", cutoff).execute()
+        if res.data:
+            ids = [r["id"] for r in res.data]
+            for wl_id in ids:
+                supabase.table("watchlists").delete().eq("id", wl_id).execute()
+            return len(ids)
+        return 0
+    except Exception:
+        return 0
 
 # ============================================================
 # MULTI-WATCHLIST — FONCTIONS SUPABASE
@@ -2570,6 +2605,11 @@ all_data_extended = get_all_data_with_watchlists(all_data)
 if "active_watchlist" not in st.session_state:
     st.session_state.active_watchlist = load_wl_index()[0]
 
+# ── Mettre à jour last_seen à chaque visite (anti-expiration 30j) ──
+if not st.session_state.get("_session_touched"):
+    touch_user_session()
+    st.session_state["_session_touched"] = True
+
 if "wl_pending_action" not in st.session_state:
     st.session_state.wl_pending_action = None
 
@@ -3792,6 +3832,18 @@ if current_page == "📈 Analyse valeur":
 # ============================================================
 elif current_page == "⭐ Watchlists":
     st.title("⭐ Mes Watchlists")
+
+    # ── Bandeau d'information token anonyme ───────────────────
+    uid_display = get_user_id()[:8] + "..."
+    st.info(
+        f"🔑 **Vos watchlists sont sauvegardées** dans une base de données sécurisée, "
+        f"identifiées par un token anonyme unique lié à votre navigateur "
+        f"(token : `{uid_display}`).  \n"
+        f"📌 **Marquez cette page en favori** pour retrouver vos watchlists depuis "
+        f"n'importe quand — l'URL contient votre token.  \n"
+        f"⚠️ **Expiration** : si vous ne revenez pas pendant **30 jours**, "
+        f"vos watchlists seront automatiquement supprimées de la base de données."
+    )
 
     # ── Gestion des watchlists ─────────────────────────────────
     wl_names = load_wl_index()
@@ -5769,3 +5821,21 @@ elif current_page == "⚙️ Configuration":
     if st.button("🧹 Purger le cache (> 2h)", help="Supprime les entrées de cache de plus de 2 heures"):
         purge_old_cache(max_age_hours=2)
         st.success("✅ Cache purgé.")
+
+    st.markdown("---")
+    st.subheader("🗑️ Nettoyage des watchlists inactives")
+    st.caption(
+        "Supprime les watchlists (et leurs contenus) des utilisateurs "
+        "qui ne se sont pas connectés depuis plus de 30 jours."
+    )
+    col_purge1, col_purge2 = st.columns([1, 3])
+    with col_purge1:
+        if st.button("🗑️ Purger les watchlists inactives (> 30j)",
+                     type="primary",
+                     help="Suppression définitive — irréversible"):
+            nb = purge_inactive_watchlists(days=30)
+            if nb > 0:
+                st.success(f"✅ {nb} watchlist(s) inactive(s) supprimée(s).")
+                st.rerun()
+            else:
+                st.info("ℹ️ Aucune watchlist inactive à supprimer.")
