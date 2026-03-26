@@ -15,6 +15,35 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import yfinance as yf
+import time
+
+# ── curl_cffi : simule un vrai navigateur Chrome pour éviter le rate limit Yahoo ──
+try:
+    from curl_cffi import requests as curl_requests
+    _YF_SESSION = curl_requests.Session(impersonate="chrome")
+except Exception:
+    _YF_SESSION = None
+
+def _yf_ticker(symbol: str):
+    """Crée un Ticker yfinance avec session curl_cffi si disponible."""
+    if _YF_SESSION is not None:
+        return yf.Ticker(symbol, session=_YF_SESSION)
+    return yf.Ticker(symbol)
+
+def _yf_call(fn, retries: int = 3, delay: float = 1.5):
+    """Exécute fn() avec retry automatique sur rate limit."""
+    for attempt in range(retries):
+        try:
+            result = fn()
+            return result
+        except Exception as e:
+            msg = str(e).lower()
+            if "too many requests" in msg or "rate limit" in msg or "429" in msg:
+                if attempt < retries - 1:
+                    time.sleep(delay * (attempt + 1))
+                    continue
+            raise
+    return None
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from supabase import create_client, Client
@@ -313,13 +342,15 @@ def _history_cache_set(ticker: str, period: str, df: pd.DataFrame):
         pass
 
 def get_history(ticker: str, period: str) -> pd.DataFrame:
+    """Historique cours — cache Supabase 60 min + curl_cffi anti rate-limit."""
     cached = _history_cache_get(ticker, period, ttl_minutes=60)
     if cached is not None:
         return cached
-    df = yf.Ticker(ticker).history(period=period)
-    if not df.empty:
+    df = _yf_call(lambda: _yf_ticker(ticker).history(period=period))
+    if df is not None and not df.empty:
         _history_cache_set(ticker, period, df)
-    return df
+        return df
+    return pd.DataFrame()
 
 _INTRADAY_MAX_PERIOD = {
     "1m": "7d", "2m": "60d", "5m": "60d",
@@ -328,24 +359,38 @@ _INTRADAY_MAX_PERIOD = {
 
 @st.cache_data(ttl=300, show_spinner=False)
 def get_history_intraday(ticker: str, period: str, interval: str) -> pd.DataFrame:
-    return yf.Ticker(ticker).history(period=period, interval=interval)
+    """Intraday — cache session 5 min + curl_cffi."""
+    try:
+        return _yf_ticker(ticker).history(period=period, interval=interval)
+    except Exception:
+        return pd.DataFrame()
 
 def get_info(ticker: str) -> dict:
+    """Infos fondamentales — cache Supabase 60 min + curl_cffi."""
     cache_key = f"info|{ticker}"
     cached = _cache_get(cache_key, _CACHE_TTL["info"])
     if cached is not None:
         return cached
-    info = yf.Ticker(ticker).info
-    _cache_set(cache_key, info)
-    return info
+    try:
+        info = _yf_call(lambda: _yf_ticker(ticker).info) or {}
+        if info:
+            _cache_set(cache_key, info)
+        return info
+    except Exception:
+        return {}
 
 def get_financials(ticker: str):
     return _get_financials_cached(ticker)
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def _get_financials_cached(ticker: str):
-    t = yf.Ticker(ticker)
-    return t.financials, t.balance_sheet, t.cashflow
+    try:
+        t = _yf_ticker(ticker)
+        return t.financials, t.balance_sheet, t.cashflow
+    except Exception:
+        import pandas as pd
+        empty = pd.DataFrame()
+        return empty, empty, empty
 
 def get_recommendations(ticker: str):
     return _get_recommendations_cached(ticker)
@@ -353,7 +398,7 @@ def get_recommendations(ticker: str):
 @st.cache_data(ttl=3600, show_spinner=False)
 def _get_recommendations_cached(ticker: str):
     try:
-        t = yf.Ticker(ticker)
+        t = _yf_ticker(ticker)
         rec = t.recommendations
         if rec is not None and not rec.empty:
             return rec
@@ -367,41 +412,46 @@ def get_calendar(ticker: str):
 @st.cache_data(ttl=3600, show_spinner=False)
 def _get_calendar_cached(ticker: str):
     try:
-        return yf.Ticker(ticker).calendar
+        return _yf_ticker(ticker).calendar
     except Exception:
         return None
 
 def get_live_quote(ticker: str):
+    """Quote live — cache Supabase 2 min + curl_cffi."""
     cache_key = f"live|{ticker}"
     cached = _cache_get(cache_key, _CACHE_TTL["live"])
     if cached is not None:
         return cached
     try:
-        info = yf.Ticker(ticker).info
+        info = _yf_call(lambda: _yf_ticker(ticker).info) or {}
         price = info.get("currentPrice") or info.get("regularMarketPrice")
         prev  = info.get("previousClose") or info.get("regularMarketPreviousClose")
         name  = info.get("longName") or info.get("shortName") or ticker
         curr  = info.get("currency", "")
         change_pct = (price - prev) / prev * 100 if price and prev and prev != 0 else None
         result = {"name": name, "price": price, "change_pct": change_pct, "currency": curr}
-        _cache_set(cache_key, result)
+        if price:
+            _cache_set(cache_key, result)
         return result
     except Exception:
         return None
 
 def get_ticker_currency(ticker: str) -> str:
+    """Devise — cache Supabase 60 min + curl_cffi."""
     cache_key = f"currency|{ticker}"
     cached = _cache_get(cache_key, _CACHE_TTL["fx"])
     if cached is not None:
         return cached if isinstance(cached, str) else "EUR"
     try:
-        curr = yf.Ticker(ticker).info.get("currency", "EUR") or "EUR"
+        info = _yf_call(lambda: _yf_ticker(ticker).info) or {}
+        curr = info.get("currency", "EUR") or "EUR"
         _cache_set(cache_key, curr)
         return curr
     except Exception:
         return "EUR"
 
 def get_eur_to_currency_rate(target_currency: str) -> float:
+    """Taux de change EUR→devise — cache Supabase 60 min + curl_cffi."""
     if not target_currency or target_currency.upper() == "EUR":
         return 1.0
     cache_key = f"fx|EUR{target_currency.upper()}"
@@ -409,12 +459,13 @@ def get_eur_to_currency_rate(target_currency: str) -> float:
     if cached is not None:
         return float(cached)
     try:
-        t = yf.Ticker(f"EUR{target_currency.upper()}=X")
-        info = t.info
+        symbol = f"EUR{target_currency.upper()}=X"
+        t = _yf_ticker(symbol)
+        info = _yf_call(lambda: t.info) or {}
         rate = info.get("regularMarketPrice") or info.get("currentPrice")
         if not rate or rate <= 0:
-            hist = t.history(period="5d")
-            if not hist.empty:
+            hist = _yf_call(lambda: t.history(period="5d"))
+            if hist is not None and not hist.empty:
                 rate = float(hist["Close"].iloc[-1])
         if rate and rate > 0:
             _cache_set(cache_key, rate)
