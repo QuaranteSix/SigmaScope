@@ -903,22 +903,30 @@ def get_ratings_stats() -> dict:
     except Exception:
         return {"nb_ratings": 0, "avg_rating": 0, "nb_saas_yes": 0, "nb_saas_no": 0}
 
-def get_feedback_messages(limit: int = 50) -> list:
-    """Retourne les derniers messages de feedback."""
+def get_feedback_messages(limit: int = 50, include_private: bool = False) -> list:
+    """
+    Retourne les derniers messages de feedback.
+    include_private=True : retourne tous les messages (admin uniquement).
+    include_private=False : retourne uniquement les messages publics.
+    """
     try:
-        res = supabase.table("user_feedback")            .select("message, created_at")            .order("created_at", desc=True)            .limit(limit).execute()
+        q = supabase.table("user_feedback")            .select("message, created_at, is_private")            .order("created_at", desc=True)            .limit(limit)
+        if not include_private:
+            q = q.eq("is_private", False)
+        res = q.execute()
         return res.data or []
     except Exception:
         return []
 
-def save_feedback(message: str, user_id: str = None) -> bool:
-    """Sauvegarde un message de feedback."""
+def save_feedback(message: str, is_private: bool = False, user_id: str = None) -> bool:
+    """Sauvegarde un message de feedback (public ou privé)."""
     if user_id is None:
         user_id = get_user_id()
     try:
         supabase.table("user_feedback").insert({
-            "user_id": user_id,
-            "message": message.strip(),
+            "user_id":    user_id,
+            "message":    message.strip(),
+            "is_private": is_private,
         }).execute()
         return True
     except Exception:
@@ -2826,7 +2834,7 @@ if current_page == "🏠 Présentation":
         '<h1>SigmaScope</h1>'
         '<p class="tagline">La plateforme d\'analyse boursière quantitative tout-en-un<br>'
         'Régression log · Analyse fondamentale · Screener · Valorisation DCF</p>'
-        '<span class="version-badge">✨ Version 24</span>'
+        '<span class="version-badge">✨ Version 24 — par jp</span>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -3072,6 +3080,61 @@ if current_page == "🏠 Présentation":
 
     st.markdown("---")
 
+    # ── Expander 0 : Roadmap / Reste à faire ─────────────────────
+    with st.expander("🛠️ Roadmap & reste à faire", expanded=False):
+        st.markdown("#### 🚧 En cours de développement / à venir")
+
+        todo_items = [
+            ("🔴", "Correction / vérification du calcul du juste prix",
+             "Révision approfondie des méthodes **DCF, Gordon-Shapiro, Multiples et ANR** — "
+             "vérification de la cohérence des formules, des hypothèses par défaut et des "
+             "résultats avec les standards de valorisation financière."),
+            ("🟢", "Authentification Google",
+             "Remplacement du token anonyme par un **vrai compte Google** — "
+             "pour retrouver ses watchlists depuis n'importe quel appareil. "
+             "Laissez-moi un commentaire si c'est important pour vous 👇"),
+            ("🟢", "Export des données",
+             "Export des watchlists et résultats d'analyse en **CSV / Excel**. "
+             "Laissez-moi un commentaire si vous en avez besoin 👇"),
+            ("🟢", "Screener avancé",
+             "Ajout de filtres techniques (RSI, Bollinger) dans le screener multi-critères. "
+             "Laissez-moi un commentaire si c'est utile pour vous 👇"),
+            ("🟢", "Stabilité Yahoo Finance",
+             "Le rate limiting de Yahoo Finance peut causer des erreurs intermittentes. "
+             "Une API officielle de remplacement est à l'étude. "
+             "Laissez-moi un commentaire si vous rencontrez souvent ce problème 👇"),
+            ("🟢", "Migration vers un vrai site web",
+             "Si l'usage le justifie, une migration vers une **application web complète** "
+             "(FastAPI + React) est envisagée. Votez ci-dessous et laissez un commentaire 👇"),
+        ]
+
+        legend_html = (
+            '<div style="display:flex;gap:18px;margin-bottom:14px;font-size:0.78rem;color:#9ab;">'
+            '<span>🔴 Priorité haute</span>'
+            '<span>🟢 À l\'étude</span>'
+            '</div>'
+        )
+        st.markdown(legend_html, unsafe_allow_html=True)
+
+        for dot, title, desc in todo_items:
+            border = "#dc3545" if dot == "🔴" else "#4C9BE8"
+            st.markdown(
+                f'<div style="background:#0d1b2a;border-radius:8px;padding:10px 16px;'
+                f'margin-bottom:8px;border-left:3px solid {border};">'
+                f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'
+                f'<span style="font-size:1rem;">{dot}</span>'
+                f'<strong style="color:#e0e0e0;font-size:0.9rem;">{title}</strong>'
+                f'</div>'
+                f'<span style="color:#9ab;font-size:0.82rem;line-height:1.5;">{desc}</span>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+
+        st.caption(
+            "💡 Dites-moi ce qui vous serait le plus utile dans la section "
+            "**Suggestions & améliorations** ci-dessous !"
+        )
+
     # ── Expander 1 : Vie & statistiques d'utilisation ────────────
     with st.expander("📊 Vie & statistiques de l'application", expanded=False):
         stats_data   = get_usage_stats()
@@ -3138,7 +3201,20 @@ if current_page == "🏠 Présentation":
     # ── Expander 2 : Suggestions d'amélioration ──────────────────
     with st.expander("💬 Suggestions & améliorations", expanded=False):
         st.markdown("#### 📝 Laisser un message")
-        st.caption("Vos suggestions sont anonymes et visibles par tous les utilisateurs.")
+
+        # Choix public / privé
+        fb_visibility = st.radio(
+            "Visibilité du message",
+            options=["🌐 Public — visible par tous", "🔒 Privé — visible uniquement par l'administrateur"],
+            horizontal=True,
+            key="fb_visibility",
+        )
+        _is_private = fb_visibility.startswith("🔒")
+
+        if _is_private:
+            st.caption("🔒 Ce message sera visible uniquement par l'administrateur.")
+        else:
+            st.caption("🌐 Ce message sera visible par tous les utilisateurs.")
 
         with st.form("form_feedback", clear_on_submit=True):
             msg = st.text_area(
@@ -3151,9 +3227,12 @@ if current_page == "🏠 Présentation":
             submitted = st.form_submit_button("📤 Envoyer", type="primary")
             if submitted:
                 if msg.strip():
-                    ok = save_feedback(msg)
+                    ok = save_feedback(msg, is_private=_is_private)
                     if ok:
-                        st.success("✅ Message envoyé, merci !")
+                        if _is_private:
+                            st.success("✅ Message privé envoyé à l'administrateur, merci !")
+                        else:
+                            st.success("✅ Message public envoyé, merci !")
                     else:
                         st.error("❌ Erreur lors de l'envoi.")
                 else:
@@ -3161,7 +3240,7 @@ if current_page == "🏠 Présentation":
 
         st.markdown("---")
         st.markdown("#### 💡 Suggestions de la communauté")
-        messages = get_feedback_messages(limit=30)
+        messages = get_feedback_messages(limit=30, include_private=False)
         if messages:
             for m in messages:
                 try:
@@ -6094,7 +6173,32 @@ elif current_page == "⚙️ Configuration":
                 purge_old_cache(max_age_hours=2)
                 st.success("✅ Cache purgé.")
 
-        # ── Expander 3 : Nettoyage watchlists inactives ───────
+        # ── Expander 3 : Messages privés ──────────────────────
+        with st.expander("🔒 Messages privés des utilisateurs", expanded=False):
+            private_msgs = get_feedback_messages(limit=50, include_private=True)
+            private_only = [m for m in private_msgs if m.get("is_private")]
+            if private_only:
+                st.caption(f"{len(private_only)} message(s) privé(s)")
+                for m in private_only:
+                    try:
+                        dt = datetime.fromisoformat(m["created_at"].replace("Z", "+00:00"))
+                        date_str = dt.strftime("%d/%m/%Y %H:%M")
+                    except Exception:
+                        date_str = ""
+                    st.markdown(
+                        f'<div style="background:#1a0d2a;border-radius:8px;padding:10px 14px;'
+                        f'margin-bottom:6px;border-left:3px solid #a855f7;">'
+                        f'<div style="display:flex;justify-content:space-between;">'
+                        f'<span style="color:#c084fc;font-size:0.72rem;">🔒 Privé · 📅 {date_str}</span>'
+                        f'</div>'
+                        f'<span style="color:#ddd;font-size:0.88rem;">{m["message"]}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.caption("Aucun message privé pour l'instant.")
+
+        # ── Expander 4 : Nettoyage watchlists inactives ───────
         with st.expander("🗑️ Nettoyage des watchlists inactives", expanded=False):
             st.caption(
                 "Supprime les watchlists (et leurs contenus) des utilisateurs "
