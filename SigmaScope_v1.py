@@ -2826,7 +2826,7 @@ if current_page == "🏠 Présentation":
         '<h1>SigmaScope</h1>'
         '<p class="tagline">La plateforme d\'analyse boursière quantitative tout-en-un<br>'
         'Régression log · Analyse fondamentale · Screener · Valorisation DCF</p>'
-        '<span class="version-badge">✨ Version 1.0 — par jp</span>'
+        '<span class="version-badge">✨ Version 24 — par jp</span>'
         '</div>',
         unsafe_allow_html=True
     )
@@ -5921,38 +5921,8 @@ elif current_page == "📖 Explications":
 # ============================================================
 elif current_page == "⚙️ Configuration":
     st.title("⚙️ Configuration — Gestion des indices")
-    st.markdown("Chargez et mettez à jour les composants des indices boursiers depuis Wikipedia.")
 
-    st.markdown("---")
-
-    col_upd1, col_upd2, col_upd3 = st.columns([2, 1, 3])
-    with col_upd1:
-        index_options   = ["-- Aucun --"] + [cfg["label"] for cfg in INDICES_CONFIG.values()]
-        index_keys_list = [None]           + list(INDICES_CONFIG.keys())
-        selected_label  = st.selectbox("Indice à mettre à jour", options=index_options, index=0, key="sb_indice")
-        selected_index_key = index_keys_list[index_options.index(selected_label)]
-    with col_upd2:
-        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-        btn_update = st.button("🔄 Mettre à jour", type="primary", help="Recharge cet indice depuis Wikipedia")
-    with col_upd3:
-        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-        if selected_index_key:
-            url = INDICES_CONFIG[selected_index_key]["url"]
-            st.caption(f"🌐 Source : [{url}]({url})")
-
-    if btn_update and selected_index_key is not None:
-        with st.spinner(f"Chargement {INDICES_CONFIG[selected_index_key]['label']}…"):
-            try:
-                df_scraped = scrape_index(selected_index_key)
-                save_index_to_master_csv(selected_index_key, df_scraped)
-                st.success(f"✅ {len(df_scraped)} composants sauvegardés pour {INDICES_CONFIG[selected_index_key]['label']}.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Erreur scraping : {e}")
-    elif btn_update and selected_index_key is None:
-        st.warning("Sélectionnez d'abord un indice.")
-
-    st.markdown("---")
+    # ── Section publique : état des indices chargés ───────────
     st.subheader("📊 État des indices chargés")
 
     if all_data:
@@ -5993,7 +5963,6 @@ elif current_page == "⚙️ Configuration":
             pass
 
         all_rows = rows_main + rows_custo
-
         if all_rows:
             rows_html = ""
             for r in all_rows:
@@ -6008,7 +5977,8 @@ elif current_page == "⚙️ Configuration":
             st.markdown(
                 f'<table class="config-table">'
                 f'<thead><tr>'
-                f'<th>Indice</th><th>Clé</th><th style="text-align:center">Nb valeurs</th><th>Source</th>'
+                f'<th>Indice</th><th>Clé</th>'
+                f'<th style="text-align:center">Nb valeurs</th><th>Source</th>'
                 f'</tr></thead>'
                 f'<tbody>{rows_html}</tbody>'
                 f'</table>',
@@ -6022,48 +5992,123 @@ elif current_page == "⚙️ Configuration":
         all_preview_keys    = [None] + list(all_data.keys())
         preview_label = st.selectbox("Afficher les composants de", options=all_preview_options)
         preview_key   = all_preview_keys[all_preview_options.index(preview_label)]
-
         if preview_key:
             df_preview = all_data[preview_key].reset_index(drop=True)
             st.dataframe(df_preview, use_container_width=True, hide_index=True, height=400)
     else:
-        st.info("ℹ️ Aucun indice chargé. Sélectionnez un indice ci-dessus et cliquez sur **🔄 Mettre à jour**.")
+        st.info("ℹ️ Aucun indice chargé. Connectez-vous en mode administrateur pour mettre à jour.")
 
     st.markdown("---")
-    st.subheader("ℹ️ Informations système")
-    wl_count = sum(len(load_watchlist(n)) for n in load_wl_index())
-    wl_status = f"✅ {len(load_wl_index())} liste(s), {wl_count} entrée(s) au total"
-    try:
-        nb_comp = supabase.table("index_components").select("id", count="exact").execute().count or 0
-        nb_cache = supabase.table("market_cache").select("id", count="exact").execute().count or 0
-    except Exception:
-        nb_comp = nb_cache = "?"
-    st.code(
-        f"Backend             : Supabase (PostgreSQL)\n"
-        f"  Composants indices: {nb_comp} lignes\n"
-        f"  Cache market      : {nb_cache} entrées\n"
-        f"  Watchlists        : {wl_status}\n"
-        f"  User ID           : {get_user_id()}",
-        language=""
-    )
-    if st.button("🧹 Purger le cache (> 2h)", help="Supprime les entrées de cache de plus de 2 heures"):
-        purge_old_cache(max_age_hours=2)
-        st.success("✅ Cache purgé.")
 
-    st.markdown("---")
-    st.subheader("🗑️ Nettoyage des watchlists inactives")
-    st.caption(
-        "Supprime les watchlists (et leurs contenus) des utilisateurs "
-        "qui ne se sont pas connectés depuis plus de 30 jours."
-    )
-    col_purge1, col_purge2 = st.columns([1, 3])
-    with col_purge1:
-        if st.button("🗑️ Purger les watchlists inactives (> 30j)",
-                     type="primary",
-                     help="Suppression définitive — irréversible"):
-            nb = purge_inactive_watchlists(days=30)
-            if nb > 0:
-                st.success(f"✅ {nb} watchlist(s) inactive(s) supprimée(s).")
+    # ── Section admin protégée par mot de passe ───────────────
+    st.subheader("🔐 Administration")
+
+    # Vérification mot de passe admin (stocké dans st.secrets)
+    _admin_ok = st.session_state.get("_admin_authenticated", False)
+
+    if not _admin_ok:
+        st.caption("Cette section est réservée à l'administrateur.")
+        with st.form("form_admin_login", clear_on_submit=True):
+            _pwd = st.text_input("Mot de passe administrateur",
+                                 type="password",
+                                 placeholder="••••••••",
+                                 label_visibility="collapsed")
+            _submitted = st.form_submit_button("🔑 Accéder", type="primary")
+            if _submitted:
+                _expected = st.secrets.get("ADMIN_PASSWORD", "")
+                if _pwd and _pwd == _expected:
+                    st.session_state["_admin_authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("❌ Mot de passe incorrect.")
+    else:
+        # Bouton déconnexion admin
+        col_admin_title, col_admin_logout = st.columns([4, 1])
+        with col_admin_title:
+            st.success("✅ Mode administrateur activé")
+        with col_admin_logout:
+            if st.button("🔓 Déconnexion", key="btn_admin_logout"):
+                st.session_state["_admin_authenticated"] = False
                 st.rerun()
-            else:
-                st.info("ℹ️ Aucune watchlist inactive à supprimer.")
+
+        # ── Expander 1 : Mise à jour des indices Wikipedia ────
+        with st.expander("🔄 Mise à jour des indices Wikipedia", expanded=False):
+            st.markdown("Rechargez les composants des indices boursiers depuis Wikipedia.")
+            col_upd1, col_upd2, col_upd3 = st.columns([2, 1, 3])
+            with col_upd1:
+                index_options   = ["-- Aucun --"] + [cfg["label"] for cfg in INDICES_CONFIG.values()]
+                index_keys_list = [None]           + list(INDICES_CONFIG.keys())
+                selected_label  = st.selectbox("Indice à mettre à jour",
+                                               options=index_options, index=0, key="sb_indice")
+                selected_index_key = index_keys_list[index_options.index(selected_label)]
+            with col_upd2:
+                st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+                btn_update = st.button("🔄 Mettre à jour", type="primary",
+                                       help="Recharge cet indice depuis Wikipedia")
+            with col_upd3:
+                st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+                if selected_index_key:
+                    url = INDICES_CONFIG[selected_index_key]["url"]
+                    st.caption(f"🌐 Source : [{url}]({url})")
+
+            if btn_update and selected_index_key is not None:
+                with st.spinner(f"Chargement {INDICES_CONFIG[selected_index_key]['label']}…"):
+                    try:
+                        df_scraped = scrape_index(selected_index_key)
+                        save_index_to_master_csv(selected_index_key, df_scraped)
+                        st.success(
+                            f"✅ {len(df_scraped)} composants sauvegardés "
+                            f"pour {INDICES_CONFIG[selected_index_key]['label']}."
+                        )
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Erreur scraping : {e}")
+            elif btn_update and selected_index_key is None:
+                st.warning("Sélectionnez d'abord un indice.")
+
+        # ── Expander 2 : Informations système ─────────────────
+        with st.expander("ℹ️ Informations système", expanded=False):
+            wl_count = sum(len(load_watchlist(n)) for n in load_wl_index())
+            wl_status = f"✅ {len(load_wl_index())} liste(s), {wl_count} entrée(s) au total"
+            try:
+                nb_comp  = supabase.table("index_components")                    .select("id", count="exact").execute().count or 0
+                nb_cache = supabase.table("market_cache")                    .select("id", count="exact").execute().count or 0
+                nb_sess  = supabase.table("usage_sessions")                    .select("id", count="exact").execute().count or 0
+                nb_rat   = supabase.table("user_ratings")                    .select("id", count="exact").execute().count or 0
+                nb_fb    = supabase.table("user_feedback")                    .select("id", count="exact").execute().count or 0
+            except Exception:
+                nb_comp = nb_cache = nb_sess = nb_rat = nb_fb = "?"
+            st.code(
+                f"Backend             : Supabase (PostgreSQL)\n"
+                f"  Composants indices: {nb_comp} lignes\n"
+                f"  Cache market      : {nb_cache} entrées\n"
+                f"  Sessions          : {nb_sess} enregistrées\n"
+                f"  Avis/notations    : {nb_rat}\n"
+                f"  Suggestions       : {nb_fb}\n"
+                f"  Watchlists        : {wl_status}\n"
+                f"  User ID (vous)    : {get_user_id()}",
+                language=""
+            )
+            if st.button("🧹 Purger le cache market (> 2h)",
+                         help="Supprime les entrées de cache de plus de 2 heures"):
+                purge_old_cache(max_age_hours=2)
+                st.success("✅ Cache purgé.")
+
+        # ── Expander 3 : Nettoyage watchlists inactives ───────
+        with st.expander("🗑️ Nettoyage des watchlists inactives", expanded=False):
+            st.caption(
+                "Supprime les watchlists (et leurs contenus) des utilisateurs "
+                "qui ne se sont pas connectés depuis plus de 30 jours. "
+                "⚠️ Opération irréversible."
+            )
+            col_purge1, col_purge2 = st.columns([2, 3])
+            with col_purge1:
+                if st.button("🗑️ Purger les watchlists inactives (> 30j)",
+                             type="primary",
+                             help="Suppression définitive — irréversible"):
+                    nb = purge_inactive_watchlists(days=30)
+                    if nb > 0:
+                        st.success(f"✅ {nb} watchlist(s) inactive(s) supprimée(s).")
+                        st.rerun()
+                    else:
+                        st.info("ℹ️ Aucune watchlist inactive à supprimer.")
