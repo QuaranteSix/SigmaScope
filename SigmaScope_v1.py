@@ -52,8 +52,14 @@ from supabase import create_client, Client
 st.set_page_config(page_title="SigmaScope", layout="wide")
 
 # ── Système de traduction i18n ────────────────────────────────────
-from lang_fr import TRANSLATIONS as _LANG_FR
-from lang_en import TRANSLATIONS as _LANG_EN
+try:
+    from lang_fr import TRANSLATIONS as _LANG_FR
+    from lang_en import TRANSLATIONS as _LANG_EN
+    from lang_tr import TRANSLATIONS as _LANG_TR
+except ImportError as _ie:
+    _LANG_FR = {}
+    _LANG_EN = {}
+    _LANG_TR = {}
 
 def t(key: str, **kwargs) -> str:
     """
@@ -61,7 +67,12 @@ def t(key: str, **kwargs) -> str:
     Supporte les variables : t("clé", n=5, name="AAPL")
     """
     lang = st.session_state.get("lang", "fr")
-    dico = _LANG_FR if lang == "fr" else _LANG_EN
+    if lang == "en":
+        dico = _LANG_EN
+    elif lang == "tr":
+        dico = _LANG_TR
+    else:
+        dico = _LANG_FR
     text = dico.get(key, _LANG_FR.get(key, key))
     if kwargs:
         try:
@@ -2804,11 +2815,12 @@ with st.sidebar:
     st.markdown("---")
 
     # ── Sélecteur de langue ──────────────────────────────────
+    _lang_opts = ["fr", "en", "tr"]
     _lang_choice = st.radio(
         t("lang_selector_label"),
-        options=["fr", "en"],
-        format_func=lambda x: t("lang_fr") if x == "fr" else t("lang_en"),
-        index=0 if st.session_state.get("lang", "fr") == "fr" else 1,
+        options=_lang_opts,
+        format_func=lambda x: t(f"lang_{x}"),
+        index=_lang_opts.index(st.session_state.get("lang", "fr")),
         horizontal=True,
         key="lang_radio",
         label_visibility="collapsed",
