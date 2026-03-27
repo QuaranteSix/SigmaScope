@@ -819,23 +819,124 @@ os.makedirs(ASSETS_DIR,    exist_ok=True)
 os.makedirs(WATCHLIST_DIR, exist_ok=True)
 os.makedirs(EXPORTS_DIR,   exist_ok=True)
 
-PERIODS = {
+# Periods: internal labels → yfinance codes
+_PERIODS_FR = {
     "1 Mois": "1mo", "3 Mois": "3mo", "6 Mois": "6mo",
     "1 An":   "1y",  "2 Ans":  "2y",  "5 Ans":  "5y",
     "10 Ans": "10y", "Max":    "max",
 }
-
-SIGMA_CRITERIA = {
-    "📈📈 Zone d'Excès Haut         (> +1,75σ)":          ( 1.75,  99.0, "Surchauffe, recherche de retour à la moyenne."),
-    "📈   Zone de Transition Haute  (+1,25 à +1,75σ)":    ( 1.25,  1.75, "Perte de souffle du mouvement haussier."),
-    "🚀   Zone de Tendance Forte    (+0,75 à +1,25σ)":    ( 0.75,  1.25, 'Le "canal de hausse" idéal (Bull Run).'),
-    "➕   Zone d'Attraction Positive (+0,25 à +0,75σ)":   ( 0.25,  0.75, "Retour progressif vers la neutralité."),
-    "〰️   Zone Neutre / Régression   (-0,25 à +0,25σ)":   (-0.25,  0.25, "Équilibre parfait, pas de direction claire."),
-    "➖   Zone d'Attraction Négative (-0,25 à -0,75σ)":  (-0.75, -0.25, "Dérive lente sous la moyenne."),
-    "📉   Zone de Tendance Faible    (-0,75 à -1,25σ)":   (-1.25, -0.75, "Canal de baisse (Bear market sain)."),
-    "🔻   Zone de Transition Basse   (-1,25 à -1,75σ)":   (-1.75, -1.25, "Le pessimisme s'accentue avant l'excès."),
-    "📉📉 Zone d'Excès Bas           (< -1,75σ)":          (-99.0, -1.75, 'Panique, zone de "soldes" statistiques.'),
+_PERIODS_EN = {
+    "1 Month": "1mo", "3 Months": "3mo", "6 Months": "6mo",
+    "1 Year":  "1y",  "2 Years":  "2y",  "5 Years":  "5y",
+    "10 Years":"10y", "Max":      "max",
 }
+_PERIODS_TR = {
+    "1 Ay":   "1mo", "3 Ay":   "3mo", "6 Ay":   "6mo",
+    "1 Yıl":  "1y",  "2 Yıl":  "2y",  "5 Yıl":  "5y",
+    "10 Yıl": "10y", "Maks":   "max",
+}
+
+def _get_periods():
+    lang = st.session_state.get("lang", "fr")
+    if lang == "en": return _PERIODS_EN
+    if lang == "tr": return _PERIODS_TR
+    return _PERIODS_FR
+
+PERIODS = _PERIODS_FR  # fallback global (remplacé dynamiquement)
+
+
+# Sigma zones: internal FR keys → (min, max, psycho_FR)
+_SIGMA_DATA = [
+    ("sz1",  1.75,  99.0, "sz1_psycho"),
+    ("sz2",  1.25,  1.75, "sz2_psycho"),
+    ("sz3",  0.75,  1.25, "sz3_psycho"),
+    ("sz4",  0.25,  0.75, "sz4_psycho"),
+    ("sz5", -0.25,  0.25, "sz5_psycho"),
+    ("sz6", -0.75, -0.25, "sz6_psycho"),
+    ("sz7", -1.25, -0.75, "sz7_psycho"),
+    ("sz8", -1.75, -1.25, "sz8_psycho"),
+    ("sz9", -99.0, -1.75, "sz9_psycho"),
+]
+
+def _get_sigma_criteria():
+    """Build SIGMA_CRITERIA dict with translated labels."""
+    _labels_fr = [
+        "📈📈 Zone d'Excès Haut         (> +1,75σ)",
+        "📈   Zone de Transition Haute  (+1,25 à +1,75σ)",
+        "🚀   Zone de Tendance Forte    (+0,75 à +1,25σ)",
+        "➕   Zone d'Attraction Positive (+0,25 à +0,75σ)",
+        "〰️   Zone Neutre / Régression   (-0,25 à +0,25σ)",
+        "➖   Zone d'Attraction Négative (-0,25 à -0,75σ)",
+        "📉   Zone de Tendance Faible    (-0,75 à -1,25σ)",
+        "🔻   Zone de Transition Basse   (-1,25 à -1,75σ)",
+        "📉📉 Zone d'Excès Bas           (< -1,75σ)",
+    ]
+    _labels_en = [
+        "📈📈 High Excess Zone           (> +1.75σ)",
+        "📈   High Transition Zone       (+1.25 to +1.75σ)",
+        "🚀   Strong Trend Zone          (+0.75 to +1.25σ)",
+        "➕   Positive Attraction Zone   (+0.25 to +0.75σ)",
+        "〰️   Neutral / Regression Zone  (-0.25 to +0.25σ)",
+        "➖   Negative Attraction Zone   (-0.25 to -0.75σ)",
+        "📉   Weak Trend Zone            (-0.75 to -1.25σ)",
+        "🔻   Low Transition Zone        (-1.25 to -1.75σ)",
+        "📉📉 Low Excess Zone             (< -1.75σ)",
+    ]
+    _labels_tr = [
+        "📈📈 Yüksek Aşırılık Bölgesi     (> +1.75σ)",
+        "📈   Yüksek Geçiş Bölgesi        (+1.25 ile +1.75σ)",
+        "🚀   Güçlü Trend Bölgesi          (+0.75 ile +1.25σ)",
+        "➕   Pozitif Çekim Bölgesi        (+0.25 ile +0.75σ)",
+        "〰️   Nötr / Regresyon Bölgesi     (-0.25 ile +0.25σ)",
+        "➖   Negatif Çekim Bölgesi        (-0.25 ile -0.75σ)",
+        "📉   Zayıf Trend Bölgesi          (-0.75 ile -1.25σ)",
+        "🔻   Düşük Geçiş Bölgesi          (-1.25 ile -1.75σ)",
+        "📉📉 Düşük Aşırılık Bölgesi       (< -1.75σ)",
+    ]
+    _psycho_fr = [
+        "Surchauffe, recherche de retour à la moyenne.",
+        "Perte de souffle du mouvement haussier.",
+        'Le "canal de hausse" idéal (Bull Run).',
+        "Retour progressif vers la neutralité.",
+        "Équilibre parfait, pas de direction claire.",
+        "Dérive lente sous la moyenne.",
+        "Canal de baisse (Bear market sain).",
+        "Le pessimisme s'accentue avant l'excès.",
+        'Panique, zone de "soldes" statistiques.',
+    ]
+    _psycho_en = [
+        "Overheating, seeking mean reversion.",
+        "Bullish momentum losing steam.",
+        "Ideal upward channel (Bull Run).",
+        "Gradual return toward neutrality.",
+        "Perfect balance, no clear direction.",
+        "Slow drift below the average.",
+        "Downward channel (healthy Bear market).",
+        "Pessimism deepening before excess.",
+        "Panic, statistical bargain zone.",
+    ]
+    _psycho_tr = [
+        "Aşırı ısınma, ortalamaya dönüş arayışı.",
+        "Yükseliş momentumu zayıflıyor.",
+        "İdeal yükseliş kanalı (Bull Run).",
+        "Nötraliteye doğru kademeli dönüş.",
+        "Mükemmel denge, net yön yok.",
+        "Ortalamanın altında yavaş sürüklenme.",
+        "Aşağı kanal (sağlıklı Bear market).",
+        "Aşırılık öncesinde derinleşen karamsarlık.",
+        "Panik, istatistiksel fırsat bölgesi.",
+    ]
+    lang = st.session_state.get("lang", "fr")
+    labels = _labels_en if lang == "en" else _labels_tr if lang == "tr" else _labels_fr
+    psychos = _psycho_en if lang == "en" else _psycho_tr if lang == "tr" else _psycho_fr
+    return {
+        lbl: (mn, mx, psy)
+        for (_, mn, mx, __), lbl, psy
+        in zip(_SIGMA_DATA, labels, psychos)
+    }
+
+SIGMA_CRITERIA = _get_sigma_criteria()  # fallback
+
 
 # ============================================================
 # STATS D'UTILISATION — FONCTIONS SUPABASE
@@ -2931,25 +3032,13 @@ if current_page == t("page_presentation"):
         st.markdown(
             '<div class="feat-card">'
             '<div class="feat-icon">📈</div>'
-            '<div class="feat-title">Analyse de valeur individuelle</div>'
-            '<div class="feat-desc">'
-            '<span style="color:#7ad4f5;">📡 Régression logarithmique</span> — '
-            'Graphique avec bandes sigma ±1/±2, position sigma actuelle et zone de tendance.<br>'
-            '<span style="color:#7ad4f5;">🏆 Scorecard fondamentale</span> — '
-            '7 critères : croissance CA/FCF, ROIC, marge FCF, PEG, P/B, dette/FCF. Note A→F.<br>'
-            '<span style="color:#7ad4f5;">📊 Analyse Technique</span> — '
-            'Chandeliers japonais avec <strong style="color:#e0e0e0;">MM</strong>, '
-            '<strong style="color:#e0e0e0;">Bollinger</strong>, '
-            '<strong style="color:#e0e0e0;">RSI</strong>, '
-            '<strong style="color:#e0e0e0;">Volume</strong>. '
-            'Granularité 1 min → 1 mois, sauts marché clos masqués.<br>'
-            '<span style="color:#7ad4f5;">🔎 Recherche intelligente</span> — '
-            'Autocomplete par ticker ou nom de société sur tous les indices chargés.'
+            f'<div class="feat-title">{t("feat1_title")}</div>'
+            f'<div class="feat-desc">{t("feat1_desc")}'
             '</div>'
-            '<span class="feat-tag">Régression log</span>'
-            '<span class="feat-tag">Scorecard A–F</span>'
-            '<span class="feat-tag">MM / BB / RSI</span>'
-            '<span class="feat-tag">Intraday</span>'
+            f'<span class="feat-tag">{t("feat1_tag1")}</span>'
+            f'<span class="feat-tag">{t("feat1_tag2")}</span>'
+            f'<span class="feat-tag">{t("feat1_tag3")}</span>'
+            f'<span class="feat-tag">{t("feat1_tag4")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -2961,22 +3050,13 @@ if current_page == t("page_presentation"):
         st.markdown(
             '<div class="feat-card green">'
             '<div class="feat-icon">⭐</div>'
-            '<div class="feat-title">Watchlists multi-portefeuilles</div>'
-            '<div class="feat-desc">'
-            '<span style="color:#4ade80;">📋 Multi-watchlists</span> — '
-            'Créez autant de listes que vous voulez (CTO, PEA, suivi sectoriel…) '
-            'et basculez de l\'une à l\'autre en un clic.<br>'
-            '<span style="color:#4ade80;">⚡ Suivi en temps réel</span> — '
-            'Cours live, variation du jour, note de scoring et PRU affichés pour chaque ligne.<br>'
-            '<span style="color:#4ade80;">📥 Import Portfolio Performance</span> — '
-            'Importez votre compte-titres depuis l\'application '
-            '<strong style="color:#e0e0e0;">Portfolio Performance</strong> (XML) : '
-            'positions, quantités et PRU récupérés automatiquement.'
+            f'<div class="feat-title">{t("feat2_title")}</div>'
+            f'<div class="feat-desc">{t("feat2_desc")}'
             '</div>'
-            '<span class="feat-tag g">Multi-watchlists</span>'
-            '<span class="feat-tag g">Cours live</span>'
-            '<span class="feat-tag g">Notes & PRU</span>'
-            '<span class="feat-tag g">Import PP</span>'
+            f'<span class="feat-tag g">{t("feat2_tag1")}</span>'
+            f'<span class="feat-tag g">{t("feat2_tag2")}</span>'
+            f'<span class="feat-tag g">{t("feat2_tag3")}</span>'
+            f'<span class="feat-tag g">{t("feat2_tag4")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -2988,20 +3068,12 @@ if current_page == t("page_presentation"):
         st.markdown(
             '<div class="feat-card gold">'
             '<div class="feat-icon">🔀</div>'
-            '<div class="feat-title">Comparaison de valeurs</div>'
-            '<div class="feat-desc">'
-            '<span style="color:#fde68a;">📉 Performance relative</span> — '
-            'Superposez jusqu\'à 5 actions sur un même graphique normalisé '
-            'pour comparer leur trajectoire sur la même période.<br>'
-            '<span style="color:#fde68a;">📐 Positions sigma simultanées</span> — '
-            'Visualisez en un coup d\'œil quelle valeur est en surchauffe '
-            'ou en zone d\'opportunité par rapport à ses pairs.<br>'
-            '<span style="color:#fde68a;">🏷️ Sélection flexible</span> — '
-            'Mixez des tickers de différents indices ou watchlists dans la même comparaison.'
+            f'<div class="feat-title">{t("feat3_title")}</div>'
+            f'<div class="feat-desc">{t("feat3_desc")}'
             '</div>'
-            '<span class="feat-tag y">Jusqu\'à 5 titres</span>'
-            '<span class="feat-tag y">Performance relative</span>'
-            '<span class="feat-tag y">Sigma comparé</span>'
+            f'<span class="feat-tag y">{t("feat3_tag1")}</span>'
+            f'<span class="feat-tag y">{t("feat3_tag2")}</span>'
+            f'<span class="feat-tag y">{t("feat3_tag3")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -3016,21 +3088,12 @@ if current_page == t("page_presentation"):
         st.markdown(
             '<div class="feat-card purple">'
             '<div class="feat-icon">🔭</div>'
-            '<div class="feat-title">Screener Sigma</div>'
-            '<div class="feat-desc">'
-            '<span style="color:#c084fc;">🔍 Scan d\'indice entier</span> — '
-            'Analysez automatiquement tous les composants d\'un indice '
-            '(S&P 500, NASDAQ-100, CAC 40…) en une seule opération.<br>'
-            '<span style="color:#c084fc;">📉 Détection des extrêmes</span> — '
-            'Identifiez les valeurs en <strong style="color:#e0e0e0;">zone d\'excès bas</strong> '
-            '(opportunités statistiques) ou en <strong style="color:#e0e0e0;">excès haut</strong> '
-            '(surchauffe, risque de retour à la moyenne).<br>'
-            '<span style="color:#c084fc;">⭐ Export watchlist</span> — '
-            'Ajoutez les résultats directement à une watchlist en un clic.'
+            f'<div class="feat-title">{t("feat4_title")}</div>'
+            f'<div class="feat-desc">{t("feat4_desc")}'
             '</div>'
-            '<span class="feat-tag p">Scan d\'indice</span>'
-            '<span class="feat-tag p">Zones sigma</span>'
-            '<span class="feat-tag p">Opportunités</span>'
+            f'<span class="feat-tag p">{t("feat4_tag1")}</span>'
+            f'<span class="feat-tag p">{t("feat4_tag2")}</span>'
+            f'<span class="feat-tag p">{t("feat4_tag3")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -3042,21 +3105,12 @@ if current_page == t("page_presentation"):
         st.markdown(
             '<div class="feat-card teal">'
             '<div class="feat-icon">🎛️</div>'
-            '<div class="feat-title">Screener multi-critères</div>'
-            '<div class="feat-desc">'
-            '<span style="color:#5eead4;">⚙️ Filtres fondamentaux</span> — '
-            'ROIC, marge FCF, PEG, croissance CA/FCF, Price/Book, dette/FCF… '
-            'Combinez librement les critères selon votre stratégie.<br>'
-            '<span style="color:#5eead4;">🏅 Score global A→F</span> — '
-            'Filtrez par note minimum pour ne garder que les valeurs '
-            'qui cochent tous vos critères d\'investissement.<br>'
-            '<span style="color:#5eead4;">📊 Résultats triables</span> — '
-            'Classez les résultats par n\'importe quel indicateur et '
-            'exportez vers votre watchlist.'
+            f'<div class="feat-title">{t("feat5_title")}</div>'
+            f'<div class="feat-desc">{t("feat5_desc")}'
             '</div>'
-            '<span class="feat-tag" style="color:#20c997;border-color:#0a3a2a;background:#041a10;">Filtres fondamentaux</span>'
-            '<span class="feat-tag" style="color:#20c997;border-color:#0a3a2a;background:#041a10;">Score A–F</span>'
-            '<span class="feat-tag" style="color:#20c997;border-color:#0a3a2a;background:#041a10;">Multi-indices</span>'
+            f'<span class="feat-tag" style="color:#20c997;border-color:#0a3a2a;background:#041a10;">{t("feat5_tag1")}</span>'
+            f'<span class="feat-tag" style="color:#20c997;border-color:#0a3a2a;background:#041a10;">{t("feat5_tag2")}</span>'
+            f'<span class="feat-tag" style="color:#20c997;border-color:#0a3a2a;background:#041a10;">{t("feat5_tag3")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -3068,22 +3122,13 @@ if current_page == t("page_presentation"):
         st.markdown(
             '<div class="feat-card orange">'
             '<div class="feat-icon">💡</div>'
-            '<div class="feat-title">Valorisation avancée (DCF & Co.)</div>'
-            '<div class="feat-desc">'
-            '<span style="color:#fdba74;">📈 DCF</span> — '
-            'Valeur intrinsèque par actualisation des flux de trésorerie futurs. '
-            'WACC et croissance perpétuelle configurables.<br>'
-            '<span style="color:#fdba74;">💰 Gordon-Shapiro</span> — '
-            'Valorisation par les dividendes pour les sociétés à distribution régulière.<br>'
-            '<span style="color:#fdba74;">⚖️ Multiples P/E & ANR</span> — '
-            'Prix juste par P/E sectoriel historique ou valeur patrimoniale (Book Value).<br>'
-            '<span style="color:#fdba74;">📅 Période indépendante</span> — '
-            'Historique cours réel vs. prix juste sur la période de votre choix.'
+            f'<div class="feat-title">{t("feat6_title")}</div>'
+            f'<div class="feat-desc">{t("feat6_desc")}'
             '</div>'
-            '<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">DCF</span>'
-            '<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">Gordon-Shapiro</span>'
-            '<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">ANR</span>'
-            '<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">Multiples P/E</span>'
+            f'<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">{t("feat6_tag1")}</span>'
+            f'<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">{t("feat6_tag2")}</span>'
+            f'<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">{t("feat6_tag3")}</span>'
+            f'<span class="feat-tag" style="color:#fd7e14;border-color:#3a2000;background:#1a0e00;">{t("feat6_tag4")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -3438,8 +3483,8 @@ if current_page == t("page_analyse"):
             )
 
     # Période par défaut : 10 Ans (modifiable via le sélecteur à côté du graphique)
-    period_label_sel = st.session_state.get("individuel_period_default", "10 Ans")
-    period = PERIODS.get(period_label_sel, "10y")
+    period_label_sel = st.session_state.get("individuel_period_default", list(_get_periods().keys())[6])
+    period = _get_periods().get(period_label_sel, "10y")
 
     _do_analyse = btn_analyser
     if _prefill and not btn_analyser:
@@ -3459,7 +3504,7 @@ if current_page == t("page_analyse"):
                 st.session_state.individuel_result = {
                     "ticker":       ticker_input,
                     "period":       period,
-                    "period_label": "10 Ans",
+                    "period_label": list(_get_periods().keys())[6],
                     "df_reg":       df_reg,
                     "sigma_pos":    sigma_pos,
                     "f":            f,
@@ -3526,13 +3571,13 @@ if current_page == t("page_analyse"):
             current_period_label = res.get("period_label", period_disp)
             new_period_label = st.selectbox(
                 t("chart_period_label"),
-                options=list(PERIODS.keys()),
-                index=list(PERIODS.keys()).index(current_period_label) if current_period_label in PERIODS else
-                      list(PERIODS.values()).index(res['period']) if res['period'] in PERIODS.values() else 6,
+                options=list(_get_periods().keys()),
+                index=list(_get_periods().keys()).index(current_period_label) if current_period_label in _get_periods() else
+                      list(_get_periods().values()).index(res['period']) if res['period'] in _get_periods().values() else 6,
                 key="chart_period_selector",
                 label_visibility="collapsed"
             )
-            new_period = PERIODS[new_period_label]
+            new_period = _get_periods()[new_period_label]
 
             st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
@@ -3600,7 +3645,7 @@ if current_page == t("page_analyse"):
 
         sigma_pos = res["sigma_pos"]
         zone_label = next(
-            (lbl for lbl, (mn, mx, _) in SIGMA_CRITERIA.items() if mn <= sigma_pos < mx),
+            (lbl for lbl, (mn, mx, _) in _get_sigma_criteria().items() if mn <= sigma_pos < mx),
             f"{sigma_pos:+.2f}σ"
         )
         st.caption(t("analyse_position_caption", sigma=f"{sigma_pos:+.2f}", zone=zone_label.split("(")[0].strip()))
@@ -3615,14 +3660,14 @@ if current_page == t("page_analyse"):
                 st.markdown(t("tc_period_section"))
                 tc_period_label = st.selectbox(
                     "Période AT",
-                    options=list(PERIODS.keys()),
-                    index=list(PERIODS.keys()).index(
-                        res.get("period_label", "10 Ans")
-                    ) if res.get("period_label", "10 Ans") in PERIODS else 6,
+                    options=list(_get_periods().keys()),
+                    index=list(_get_periods().keys()).index(
+                        res.get("period_label", list(_get_periods().keys())[6])
+                    ) if res.get("period_label", list(_get_periods().keys())[6]) in _get_periods() else 6,
                     key="tc_period_selector",
                     label_visibility="collapsed",
                 )
-                _tc_period_raw = PERIODS[tc_period_label]
+                _tc_period_raw = _get_periods()[tc_period_label]
 
                 st.markdown(t("tc_granularity_section"))
                 _TC_INTERVALS = {
@@ -3948,15 +3993,15 @@ if current_page == t("page_analyse"):
                                              index=0, key="fv_gran")
                 fv_gran = fv_gran_opts[fv_gran_label]
             with fv_c3:
-                _fv_period_default = res.get("period_label", "10 Ans")
+                _fv_period_default = res.get("period_label", list(_get_periods().keys())[6])
                 fv_period_label = st.selectbox(
                     "Période",
-                    options=list(PERIODS.keys()),
-                    index=list(PERIODS.keys()).index(_fv_period_default)
-                          if _fv_period_default in PERIODS else 6,
+                    options=list(_get_periods().keys()),
+                    index=list(_get_periods().keys()).index(_fv_period_default)
+                          if _fv_period_default in _get_periods() else 6,
                     key="fv_period_selector",
                 )
-                fv_period = PERIODS[fv_period_label]
+                fv_period = _get_periods()[fv_period_label]
             with fv_c4:
                 fv_overlay = st.checkbox(t("fv_overlay_label"), value=True,
                                          key="fv_overlay")
@@ -4297,12 +4342,12 @@ elif current_page == t("page_watchlists"):
                                         "• Position σ")
         with ctrl2:
             wl_period_label = st.selectbox(
-                "📅 Période σ — n'affecte pas les fondamentaux",
-                options=list(PERIODS.keys()),
-                index=list(PERIODS.keys()).index("1 An"),
+                t("wl_period_sigma_label"),
+                options=list(_get_periods().keys()),
+                index=3,  # 1 year (index stable across languages)
                 key="wl_period",
             )
-            wl_period = PERIODS[wl_period_label]
+            wl_period = _get_periods()[wl_period_label]
 
         st.markdown(t("wl_stocks_followed", n=len(df_wl), uid=f"*Période σ : {wl_period_label}*"))
 
@@ -4750,12 +4795,12 @@ elif current_page == t("page_comparaison"):
             st.markdown(t("comp_period_label_bold"))
             period_label = st.selectbox(
                 "Horizon temporel",
-                options=list(PERIODS.keys()),
+                options=list(_get_periods().keys()),
                 index=2,
                 key="comp_period",
                 label_visibility="collapsed",
             )
-            compare_period = PERIODS[period_label]
+            compare_period = _get_periods()[period_label]
 
         row2_col1, row2_col2 = st.columns([3, 1])
         with row2_col1:
@@ -4913,8 +4958,8 @@ elif current_page == t("page_screener_sigma"):
         left_col, right_col = st.columns([1, 1], gap="large")
 
         with left_col:
-            sigma_period_label = st.selectbox(t("screener_sigma_period_label"), options=list(PERIODS.keys()), index=4, key="sigma_period")
-            sigma_period = PERIODS[sigma_period_label]
+            sigma_period_label = st.selectbox(t("screener_sigma_period_label"), options=list(_get_periods().keys()), index=4, key="sigma_period")
+            sigma_period = _get_periods()[sigma_period_label]
 
             sigma_index_options = [k for k in all_data_extended if not all_data_extended[k].empty]
             if sigma_index_options:
@@ -4933,8 +4978,8 @@ elif current_page == t("page_screener_sigma"):
         with right_col:
             st.markdown(t("screener_sigma_zones_title"))
             selected_criteria = []
-            for idx_z, zone_key in enumerate(SIGMA_CRITERIA):
-                z_min, z_max, z_psycho = SIGMA_CRITERIA[zone_key]
+            for idx_z, zone_key in enumerate(_get_sigma_criteria()):
+                z_min, z_max, z_psycho = _get_sigma_criteria()[zone_key]
                 if st.checkbox(zone_key, value=False, key=f"chk_{idx_z}", help=f"💬 {z_psycho}"):
                     selected_criteria.append(zone_key)
 
@@ -4965,7 +5010,7 @@ elif current_page == t("page_screener_sigma"):
                 if hist.empty or len(hist) < 20: continue
                 _, _, sigma_pos = compute_regression(hist)
                 for zk in selected_criteria:
-                    z_min, z_max, z_psycho = SIGMA_CRITERIA[zk]
+                    z_min, z_max, z_psycho = _get_sigma_criteria()[zk]
                     if z_min <= sigma_pos < z_max:
                         roe_sigma = None
                         try:
@@ -5143,8 +5188,8 @@ elif current_page == t("page_screener_multi"):
         # ── Colonne 1 : Paramètres de scan ────────────────────────
         with sc_col1:
             st.markdown('<div class="scr-card"><div class="scr-card-title">🗂️ Paramètres de scan</div>', unsafe_allow_html=True)
-            scr_period_label = st.selectbox(t("screener_multi_period_label"), options=list(PERIODS.keys()), index=4, key="scr_period")
-            scr_period = PERIODS[scr_period_label]
+            scr_period_label = st.selectbox(t("screener_multi_period_label"), options=list(_get_periods().keys()), index=4, key="scr_period")
+            scr_period = _get_periods()[scr_period_label]
 
             scr_index_opts = [k for k in all_data_extended if not all_data_extended[k].empty]
             if scr_index_opts:
@@ -5187,8 +5232,8 @@ elif current_page == t("page_screener_multi"):
         with sc_col3:
             st.markdown('<div class="scr-card"><div class="scr-card-title">🔭 Filtres sigma <em style="font-weight:400;font-size:0.8rem">(cochez les zones acceptées)</em></div>', unsafe_allow_html=True)
             scr_sigma_selected = []
-            for idx_z, zone_key in enumerate(SIGMA_CRITERIA):
-                z_min, z_max, z_psycho = SIGMA_CRITERIA[zone_key]
+            for idx_z, zone_key in enumerate(_get_sigma_criteria()):
+                z_min, z_max, z_psycho = _get_sigma_criteria()[zone_key]
                 short_label = zone_key.split("(")[0].strip() + (" (" + zone_key.split("(")[1] if "(" in zone_key else "")
                 if st.checkbox(short_label, value=False, key=f"scr_chk_{idx_z}", help=f"💬 {z_psycho}"):
                     scr_sigma_selected.append(zone_key)
@@ -5218,7 +5263,7 @@ elif current_page == t("page_screener_multi"):
                     f = compute_fundamentals(tkr)
                 except: continue
                 zone_matched = next(
-                    (lbl for lbl, (mn, mx, _) in SIGMA_CRITERIA.items() if mn <= sigma_pos < mx), "N/A"
+                    (lbl for lbl, (mn, mx, _) in _get_sigma_criteria().items() if mn <= sigma_pos < mx), "N/A"
                 )
                 all_raw.append({
                     "ticker":     tkr, "company": company,
@@ -5898,9 +5943,9 @@ elif current_page == t("page_configuration"):
     if not _admin_ok:
         st.caption(t("config_admin_caption"))
         with st.form("form_admin_login", clear_on_submit=True):
-            _pwd = st.text_input("Mot de passe administrateur",
+            _pwd = st.text_input(t("config_admin_pwd_label"),
                                  type="password",
-                                 placeholder="••••••••", label=t("config_admin_pwd_label"),
+                                 placeholder="••••••••",
                                  label_visibility="collapsed")
             _submitted = st.form_submit_button("🔑 Accéder", type="primary")
             if _submitted:
