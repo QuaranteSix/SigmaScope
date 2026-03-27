@@ -3198,14 +3198,14 @@ if current_page == t("page_presentation"):
             )
 
         st.markdown("---")
-        st.markdown("#### ⭐ Notez l'application")
+        st.markdown(t("stats_rating_section"))
         existing = get_user_rating()
         c_note, c_saas = st.columns(2)
 
         with c_note:
             current_rating = existing["rating"] if existing else 3
             new_rating = st.radio(
-                "Votre note",
+                t("stats_rating_label"),
                 options=[1, 2, 3, 4, 5],
                 index=current_rating - 1,
                 horizontal=True,
@@ -3216,12 +3216,12 @@ if current_page == t("page_presentation"):
         with c_saas:
             current_vote = existing["vote_saas"] if existing else None
             vote_options = [
-                "✅ Oui, convertir en vrai site web",
-                "❌ Non, l'app Streamlit me suffit"
+                t("stats_saas_yes_opt"),
+                t("stats_saas_no_opt")
             ]
             vote_idx = 0 if current_vote is True else 1 if current_vote is False else 0
             new_vote_str = st.radio(
-                "Faut-il convertir SigmaScope en un vrai site web ?",
+                t("stats_saas_label"),
                 options=vote_options,
                 index=vote_idx,
                 key="pres_saas_vote"
@@ -3358,7 +3358,7 @@ if current_page == t("page_analyse"):
 
         with col_b:
             ticker_from_index = None
-            all_index_options  = ["-- Aucun --"]
+            all_index_options  = [t("analyse_indice_none")]
             all_index_keys_map = [None]
             for k in all_data_extended:
                 all_index_options.append(get_label_extended(k))
@@ -4165,7 +4165,7 @@ if current_page == t("page_analyse"):
             render_historical_charts(res["f"], ticker_disp)
     else:
         if not btn_analyser:
-            st.info("👆 Configurez un ticker ci-dessus puis cliquez sur **🚀 Lancer l'Analyse**.")
+            st.info(t("analyse_configure_first"))
 
 
 # ============================================================
@@ -4176,15 +4176,7 @@ elif current_page == t("page_watchlists"):
 
     # ── Bandeau d'information token anonyme ───────────────────
     uid_display = get_user_id()[:8] + "..."
-    st.info(
-        f"🔑 **Vos watchlists sont sauvegardées** dans une base de données sécurisée, "
-        f"identifiées par un token anonyme unique lié à votre navigateur "
-        f"(token : `{uid_display}`).  \n"
-        f"📌 **Marquez cette page en favori** pour retrouver vos watchlists depuis "
-        f"n'importe quand — l'URL contient votre token.  \n"
-        f"⚠️ **Expiration** : si vous ne revenez pas pendant **30 jours**, "
-        f"vos watchlists seront automatiquement supprimées de la base de données."
-    )
+    st.info(t("wl_info_full", uid=uid_display))
 
     # ── Gestion des watchlists ─────────────────────────────────
     wl_names = load_wl_index()
@@ -4703,14 +4695,14 @@ elif current_page == t("page_watchlists"):
                 with note_col1:
                     ticker_to_edit = st.selectbox(
                         "Action",
-                        options=["-- Choisir --"] + wl_display_list,
+                        options=[t("wl_choose_dash")] + wl_display_list,
                         key="wl_edit_sel"
                     )
                 with note_col2:
                     edit_note  = st.text_input("Note personnelle", key="wl_edit_note",  placeholder="ex : Position longue")
                     edit_price = st.text_input("Prix d'achat",     key="wl_edit_price", placeholder="ex : 178.50")
                     if st.button("💾 Enregistrer", key="wl_edit_btn", use_container_width=True):
-                        if ticker_to_edit != "-- Choisir --":
+                        if ticker_to_edit != t("wl_choose_dash"):
                             ticker_raw = ticker_to_edit.split(" — ")[0].strip()
                             df_edit = load_watchlist(st.session_state.active_watchlist)
                             mask = df_edit["ticker"].str.upper() == ticker_raw.upper()
@@ -4848,8 +4840,8 @@ elif current_page == t("page_comparaison"):
             ))
         fig.add_hline(y=1.0, line_dash="dot", line_color="gray", opacity=0.5)
         fig.update_layout(
-            title=dict(text=f"Performance relative normalisée — {period_label}", font_size=16),
-            xaxis_title="Date", yaxis_title="Prix normalisé (base 1)", yaxis_tickformat=".0%",
+            title=dict(text=t("comp_chart_title", period=period_label), font_size=16),
+            xaxis_title=t("comp_date_axis"), yaxis_title=t("comp_yaxis"), yaxis_tickformat=".0%",
             hovermode="x unified", legend=dict(orientation="v", x=1.02, y=1),
             height=480, margin=dict(l=50,r=120,t=50,b=50), template="plotly_dark",
         )
@@ -4935,7 +4927,7 @@ elif current_page == t("page_screener_sigma"):
                 )
                 sigma_index_key = sigma_index_options[sigma_index_labels.index(sigma_index_label)]
             else:
-                st.warning("⚠️ Aucun indice chargé. Allez dans ⚙️ Configuration.")
+                st.warning(t("screener_no_index_warn"))
                 sigma_index_key = None
 
         with right_col:
@@ -5165,7 +5157,7 @@ elif current_page == t("page_screener_multi"):
                 )
                 scr_index_key = scr_index_opts[scr_index_labels.index(scr_index_label)]
             else:
-                st.warning("⚠️ Aucun indice chargé. Allez dans ⚙️ Configuration.")
+                st.warning(t("screener_multi_no_index"))
                 scr_index_key = None
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -5201,7 +5193,7 @@ elif current_page == t("page_screener_multi"):
                 if st.checkbox(short_label, value=False, key=f"scr_chk_{idx_z}", help=f"💬 {z_psycho}"):
                     scr_sigma_selected.append(zone_key)
             if not scr_sigma_selected:
-                st.caption("ℹ️ Aucune zone sigma sélectionnée = toutes les zones acceptées.")
+                st.caption(t("screener_multi_no_sigma"))
             st.markdown('</div>', unsafe_allow_html=True)
 
     st.divider()
@@ -5570,19 +5562,16 @@ elif current_page == t("page_explications"):
     # ── Méthode 1 — DCF ─────────────────────────────────────────
     with st.expander(t("dcf_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card blue">'
-            '<div class="guide-title">L\'approche par les flux de trésorerie actualisés</div>'
-            '<div class="guide-body">'
-            'Le concept fondamental : <strong>la valeur d\'une entreprise aujourd\'hui est égale à la somme '
-            'de tous ses flux de trésorerie futurs, ramenés en valeur d\'aujourd\'hui</strong> par un taux '
-            'd\'actualisation. Un euro reçu dans 10 ans vaut moins qu\'un euro reçu aujourd\'hui.'
+            f'<div class="guide-card blue">'
+            f'<div class="guide-title">{t("dcf_html_title")}</div>'
+            f'<div class="guide-body">{t("dcf_html_concept")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<div class="guide-card blue" style="margin-top:-14px;border-top:none;padding-top:8px;">'
-            '<div class="guide-formula">📐 Formule</div>'
+            f'<div class="guide-card blue" style="margin-top:-14px;border-top:none;padding-top:8px;">'
+            f'<div class="guide-formula">{t("dcf_html_formula_lbl")}</div>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5591,24 +5580,13 @@ elif current_page == t("page_explications"):
         )
         st.markdown(
             '<div class="guide-card blue" style="margin-top:-14px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Variables :</strong><br>'
-            '&nbsp;&nbsp;• <strong>FCFₜ</strong> : Free Cash Flow prévu à l\'année t<br>'
-            '&nbsp;&nbsp;• <strong>k</strong> : Taux d\'actualisation — souvent le WACC '
-            '(coût moyen pondéré du capital), typiquement 8–12%<br>'
-            '&nbsp;&nbsp;• <strong>TV</strong> : Valeur Terminale — représente 60 à 80% de la valeur totale ; '
-            'calculée via <em>TV = FCFₙ × (1+g) / (k−g)</em> où g est la croissance perpétuelle (1–3%)<br>'
-            '&nbsp;&nbsp;• <strong>n</strong> : Horizon de prévision explicite (généralement 5 à 10 ans)'
+            f'<div class="guide-body">{t("dcf_html_vars")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:8px;color:#aaa;">'
-            '📊 <em>Cas d\'usage : Entreprises à revenus prévisibles et croissance stable — '
-            'Air Liquide, Microsoft, Total Energies.</em>'
+            f'<div class="guide-body" style="margin-top:8px;color:#aaa;">{t("dcf_html_usecase")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Sensibilité : une variation de ±1% sur k ou g peut faire varier la valeur de 20 à 40%. '
-            'Toujours construire un scénario pessimiste, central et optimiste.</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("dcf_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-green">✅ Méthode de référence pour l\'investissement long terme</span>'
+            f'<span class="guide-target tgt-green">{t("dcf_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5616,19 +5594,16 @@ elif current_page == t("page_explications"):
     # ── Méthode 2 — Multiples ────────────────────────────────────
     with st.expander(t("multiples_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card yellow">'
-            '<div class="guide-title">Évaluation par comparaison aux pairs</div>'
-            '<div class="guide-body">'
-            'Le concept : <strong>une action vaut ce que le marché est prêt à payer pour des entreprises '
-            'comparables</strong>. C\'est une évaluation relative — on ne cherche pas la valeur intrinsèque, '
-            'mais si l\'action est chère ou bon marché par rapport à ses concurrents ou à son historique.'
+            f'<div class="guide-card yellow">'
+            f'<div class="guide-title">{t("mult_html_title")}</div>'
+            f'<div class="guide-body">{t("mult_html_concept")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<div class="guide-card yellow" style="margin-top:-14px;border-top:none;padding-top:8px;">'
-            '<div class="guide-formula">📐 Formule du Prix Estimé</div>'
+            f'<div class="guide-card yellow" style="margin-top:-14px;border-top:none;padding-top:8px;">'
+            f'<div class="guide-formula">{t("mult_html_formula_lbl")}</div>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5637,24 +5612,13 @@ elif current_page == t("page_explications"):
         )
         st.markdown(
             '<div class="guide-card yellow" style="margin-top:-14px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Principaux multiples :</strong><br>'
-            '&nbsp;&nbsp;• <strong>P/E</strong> (Price / Earnings) : le plus populaire. '
-            'Ex : secteur tech à P/E 25 → une entreprise avec EPS de 10€ vaut 250€.<br>'
-            '&nbsp;&nbsp;• <strong>EV/EBITDA</strong> : plus fiable pour comparer des entreprises '
-            'avec des structures de capital différentes (dette variable).<br>'
-            '&nbsp;&nbsp;• <strong>P/S</strong> (Price / Sales) : utile pour les start-ups sans bénéfices.<br>'
-            '&nbsp;&nbsp;• <strong>P/FCF</strong> : préféré des investisseurs value — plus difficile à manipuler.'
+            f'<div class="guide-body">{t("mult_html_details")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:8px;color:#aaa;">'
-            '📊 <em>Cas d\'usage : Secteurs homogènes — Banques, Automobile, Grande Distribution, '
-            'Télécoms. Aussi utile pour une décision rapide à un instant T.</em>'
+            f'<div class="guide-body" style="margin-top:8px;color:#aaa;">{t("mult_html_usecase")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Limite : si tout le secteur est surévalué, l\'action comparée le sera aussi. '
-            'Cette méthode dit "relativement pas cher", pas "vraiment pas cher".</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("mult_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-yellow">⚡ Méthode rapide pour le screening et la comparaison sectorielle</span>'
+            f'<span class="guide-target tgt-yellow">{t("mult_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5662,20 +5626,16 @@ elif current_page == t("page_explications"):
     # ── Méthode 3 — Gordon-Shapiro ───────────────────────────────
     with st.expander(t("gordon_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card green">'
-            '<div class="guide-title">Le Dividend Discount Model (DDM)</div>'
-            '<div class="guide-body">'
-            'Le concept : <strong>l\'action est assimilée à une rente perpétuelle</strong>. '
-            'Sa valeur est la somme actualisée de tous les dividendes futurs que l\'investisseur recevra. '
-            'Ce modèle est le plus élégant mathématiquement, mais s\'applique uniquement aux sociétés '
-            'qui versent des dividendes réguliers et prévisibles.'
+            f'<div class="guide-card green">'
+            f'<div class="guide-title">{t("gordon_html_title")}</div>'
+            f'<div class="guide-body">{t("gordon_html_concept")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<div class="guide-card green" style="margin-top:-14px;border-top:none;padding-top:8px;">'
-            '<div class="guide-formula">📐 Formule de Gordon-Shapiro</div>'
+            f'<div class="guide-card green" style="margin-top:-14px;border-top:none;padding-top:8px;">'
+            f'<div class="guide-formula">{t("gordon_html_formula_lbl")}</div>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5684,26 +5644,13 @@ elif current_page == t("page_explications"):
         )
         st.markdown(
             '<div class="guide-card green" style="margin-top:-14px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Variables :</strong><br>'
-            '&nbsp;&nbsp;• <strong>D₁</strong> : Dividende attendu l\'année prochaine '
-            '= D₀ × (1 + g), où D₀ est le dernier dividende versé<br>'
-            '&nbsp;&nbsp;• <strong>k</strong> : Taux de rendement exigé par l\'actionnaire '
-            '(ex : 7% pour un investisseur prudent)<br>'
-            '&nbsp;&nbsp;• <strong>g</strong> : Taux de croissance annuel perpétuel du dividende '
-            '(ex : 3–5% pour une société mature solide)<br><br>'
-            '<strong>Exemple :</strong> D₁ = 2€, k = 8%, g = 3% → '
-            'P = 2 / (0,08 − 0,03) = <strong>40€</strong>'
+            f'<div class="guide-body">{t("gordon_html_vars")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:8px;color:#aaa;">'
-            '📊 <em>Cas d\'usage : Sociétés matures à dividende croissant — '
-            'Coca-Cola, L\'Oréal, Realty Income, Orange, LVMH.</em>'
+            f'<div class="guide-body" style="margin-top:8px;color:#aaa;">{t("gordon_html_usecase")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Limite : si k ≤ g, la formule explose. Ne fonctionne pas pour les '
-            'entreprises qui ne versent pas de dividende ou ont une croissance supérieure à k.</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("gordon_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-green">💰 Méthode idéale pour les investisseurs recherchant un revenu passif</span>'
+            f'<span class="guide-target tgt-green">{t("gordon_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5711,20 +5658,16 @@ elif current_page == t("page_explications"):
     # ── Méthode 4 — ANR ─────────────────────────────────────────
     with st.expander(t("anr_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card red">'
-            '<div class="guide-title">La valeur du patrimoine net réel</div>'
-            '<div class="guide-body">'
-            'Le concept : <strong>que resterait-il aux actionnaires si l\'entreprise vendait tous '
-            'ses actifs et remboursait toutes ses dettes ?</strong> On regarde le bilan comptable '
-            'plutôt que le compte de résultat. C\'est la méthode de Benjamin Graham, père de '
-            'l\'investissement value.'
+            f'<div class="guide-card red">'
+            f'<div class="guide-title">{t("anr_html_title")}</div>'
+            f'<div class="guide-body">{t("anr_html_concept")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
         )
         st.markdown(
-            '<div class="guide-card red" style="margin-top:-14px;border-top:none;padding-top:8px;">'
-            '<div class="guide-formula">📐 Formule</div>'
+            f'<div class="guide-card red" style="margin-top:-14px;border-top:none;padding-top:8px;">'
+            f'<div class="guide-formula">{t("anr_html_formula_lbl")}</div>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5735,25 +5678,13 @@ elif current_page == t("page_explications"):
         )
         st.markdown(
             '<div class="guide-card red" style="margin-top:-14px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Variantes :</strong><br>'
-            '&nbsp;&nbsp;• <strong>Book Value (P/B)</strong> : version comptable simple, '
-            'sans réévaluation des actifs à la valeur de marché.<br>'
-            '&nbsp;&nbsp;• <strong>Net-Net de Graham</strong> : cas extrême — '
-            'l\'action cote en dessous de son seul actif circulant net de toutes les dettes.<br>'
-            '&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Net-Net = (Cash + Stocks + Créances) − Dettes Totales</em><br>'
-            '&nbsp;&nbsp;• <strong>ANR immobilier</strong> : réévaluation des immeubles '
-            'aux prix de marché (indispensable pour les SCPI et foncières).'
+            f'<div class="guide-body">{t("anr_html_variants")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:8px;color:#aaa;">'
-            '📊 <em>Cas d\'usage : Holdings, foncières immobilières (SCPI, SIIC), '
-            'entreprises industrielles lourdes, sociétés en difficulté ou en liquidation.</em>'
+            f'<div class="guide-body" style="margin-top:8px;color:#aaa;">{t("anr_html_usecase")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Limite : ne tient pas compte de la capacité bénéficiaire future. '
-            'Une entreprise peut valoir peu sur le papier mais générer énormément de cash.</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("anr_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-red">🔍 Méthode Deep Value — base de l\'approche Benjamin Graham</span>'
+            f'<span class="guide-target tgt-red">{t("anr_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5761,27 +5692,15 @@ elif current_page == t("page_explications"):
     # ── Tableau récapitulatif ────────────────────────────────────
     st.markdown("")
     st.markdown(
-        '<div class="guide-card" style="border-left-color:#4C9BE8;">'
-        '<div class="guide-title">🗺️ Quel modèle pour quel profil ?</div>'
+        f'<div class="guide-card" style="border-left-color:#4C9BE8;">'
+        f'<div class="guide-title">{t("explain_model_table_title")}</div>'
         '</div>',
         unsafe_allow_html=True
     )
-    st.markdown("""
-| Profil de l'entreprise | Méthode recommandée | Indicateur clé |
-|---|---|---|
-| 🚀 Start-up / Forte croissance | DCF (scénarios agressifs) ou Multiples de CA (P/S) | Croissance CA, TAM |
-| 🏆 Leader de marché stable | DCF + Multiples P/E | FCF, ROIC, P/E sectoriel |
-| 💰 Société à dividende croissant | Gordon-Shapiro (DDM) | D₁, g, rendement |
-| 🏢 Foncière / Holding / Industriel | Actif Net Réévalué (ANR) | P/B, Net-Net, ANR/action |
-| ⚡ Décision rapide / Screening | Multiples comparatifs | P/E, EV/EBITDA, P/FCF |
-""")
+    st.markdown(t("explain_model_table"))
     st.markdown(
-        '<div class="guide-card" style="border-left-color:#4C9BE8;margin-top:0;">'
-        '<div class="guide-body" style="color:#aaa;">'
-        '💡 <em>En pratique, les professionnels utilisent <strong>au moins deux méthodes</strong> '
-        'et comparent leurs résultats. Si le DCF, les Multiples et le DDM convergent vers le même prix, '
-        'la conviction est beaucoup plus forte. Une grande divergence signale une incertitude élevée '
-        'ou une hypothèse à revoir.</em>'
+        f'<div class="guide-card" style="border-left-color:#4C9BE8;margin-top:0;">'
+        f'<div class="guide-body" style="color:#aaa;">{t("explain_convergence_note")}'
         '</div>'
         '</div>',
         unsafe_allow_html=True
@@ -5793,12 +5712,9 @@ elif current_page == t("page_explications"):
 
     with st.expander(t("wacc_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card blue">'
-            '<div class="guide-title">Weighted Average Cost of Capital (WACC)</div>'
-            '<div class="guide-body">'
-            'Le WACC est le taux auquel on "rabat" les flux futurs à aujourd\'hui. '
-            '<strong>Plus il est élevé, plus la valeur calculée sera faible</strong> — '
-            'une variation de ±1% peut changer la valorisation de 15 à 30%.'
+            f'<div class="guide-card blue">'
+            f'<div class="guide-title">{t("wacc_html_title")}</div>'
+            f'<div class="guide-body">{t("wacc_html_body")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
@@ -5806,40 +5722,22 @@ elif current_page == t("page_explications"):
         st.markdown(r"$$WACC = \frac{E}{E+D} \cdot k_e + \frac{D}{E+D} \cdot k_d \cdot (1 - t)$$")
         st.markdown(
             '<div class="guide-card blue" style="margin-top:-12px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Variables :</strong><br>'
-            '&nbsp;&nbsp;• <strong>kₑ</strong> = coût des fonds propres = Taux sans risque + β × Prime de marché<br>'
-            '&nbsp;&nbsp;&nbsp;&nbsp;→ Taux sans risque ≈ 4% (OAT 10 ans) | Prime de marché ≈ 5–6%<br>'
-            '&nbsp;&nbsp;• <strong>kd</strong> = coût de la dette (taux d\'emprunt moyen)<br>'
-            '&nbsp;&nbsp;• <strong>t</strong> = taux d\'imposition (≈ 25–30% en France, 21% aux USA)<br>'
-            '&nbsp;&nbsp;• <strong>β (beta)</strong> = volatilité relative vs le marché<br>'
+            f'<div class="guide-body">{t("wacc_html_vars")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:8px;">'
-            '<strong>Fourchettes typiques par profil :</strong><br>'
-            '&nbsp;&nbsp;• Grande cap stable (β≈0.8) : 7–9%<br>'
-            '&nbsp;&nbsp;• Entreprise cyclique (β≈1.2) : 10–12%<br>'
-            '&nbsp;&nbsp;• Petite cap / forte croissance (β≈1.5) : 13–16%<br>'
-            '&nbsp;&nbsp;• Entreprise très endettée : ajouter 1–3% de spread'
+            f'<div class="guide-body" style="margin-top:8px;">{t("wacc_html_ranges")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>SigmaScope estime automatiquement le WACC via : '
-            'Taux sans risque (4%) + β × 5% + spread dette. '
-            'Cette estimation est indicative — ajustez selon votre propre jugement.</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("wacc_html_auto")}</em>'
             '</div>'
-            '<span class="guide-target tgt-yellow">🎯 Sensibilité : ±1% sur k → ±15–25% sur la valeur</span>'
+            f'<span class="guide-target tgt-yellow">{t("wacc_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
 
     with st.expander(t("g_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card green">'
-            '<div class="guide-title">Taux de croissance terminal (valeur terminale)</div>'
-            '<div class="guide-body">'
-            'La valeur terminale représente <strong>60 à 80% de la valeur totale DCF</strong>. '
-            'Le paramètre g est donc le plus sensible du modèle. '
-            '<strong>Il doit impérativement être inférieur au WACC</strong>, '
-            'sinon la formule produit des valeurs infinies ou négatives.'
+            f'<div class="guide-card green">'
+            f'<div class="guide-title">{t("g_html_title")}</div>'
+            f'<div class="guide-body">{t("g_html_body")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
@@ -5847,31 +5745,20 @@ elif current_page == t("page_explications"):
         st.markdown(r"$$TV = \frac{FCF_n \cdot (1+g)}{WACC - g}$$")
         st.markdown(
             '<div class="guide-card green" style="margin-top:-12px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Règles de calibrage :</strong><br>'
-            '&nbsp;&nbsp;• g ne doit <strong>jamais dépasser la croissance nominale du PIB</strong> '
-            'sur le long terme (≈ 2–3% pour les économies développées)<br>'
-            '&nbsp;&nbsp;• Secteur tech / logiciel : 2.5–3% (innovation continue)<br>'
-            '&nbsp;&nbsp;• Industrie lourde / utilities : 1–1.5% (croissance faible)<br>'
-            '&nbsp;&nbsp;• Marchés émergents : 3–4% possible (mais risque pays à intégrer dans k)'
+            f'<div class="guide-body">{t("g_html_rules")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Un g de 4% avec un WACC de 10% donne une TV 2× plus élevée qu\'un g de 2%. '
-            'Toujours construire 3 scénarios : pessimiste (g=1%), central (g=2.5%), optimiste (g=4%).</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("g_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-green">🎯 Règle d\'or : g &lt; WACC et g ≤ croissance du PIB</span>'
+            f'<span class="guide-target tgt-green">{t("g_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
 
     with st.expander(t("k_gordon_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card yellow">'
-            '<div class="guide-title">Taux de rendement exigé par l\'actionnaire</div>'
-            '<div class="guide-body">'
-            'Dans le modèle Gordon-Shapiro, k représente le rendement minimum que l\'investisseur '
-            'exige pour détenir l\'action. Il joue le même rôle que le WACC dans le DCF, '
-            'mais s\'applique uniquement aux capitaux propres (pas à la dette).'
+            f'<div class="guide-card yellow">'
+            f'<div class="guide-title">{t("k_html_title")}</div>'
+            f'<div class="guide-body">{t("k_html_body")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
@@ -5879,52 +5766,31 @@ elif current_page == t("page_explications"):
         st.markdown(r"$$k = r_f + \beta \cdot (r_m - r_f)$$")
         st.markdown(
             '<div class="guide-card yellow" style="margin-top:-12px;border-top:none;border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Calibrage pratique :</strong><br>'
-            '&nbsp;&nbsp;• Investisseur prudent (retraite, revenu) : k = 5–7%<br>'
-            '&nbsp;&nbsp;• Investisseur équilibré : k = 7–9%<br>'
-            '&nbsp;&nbsp;• Investisseur croissance : k = 9–12%<br>'
-            '&nbsp;&nbsp;• Contrainte absolue : k &gt; g (sinon P = négatif ou infini)'
+            f'<div class="guide-body">{t("k_html_calibration")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Exemple : k=8%, g=3% → spread=5% | k=6%, g=4% → spread=2% : '
-            'la valeur est 2.5× plus élevée avec le même dividende. '
-            'La sensibilité à k est donc extrême quand le spread k−g est faible.</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("k_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-yellow">🎯 Sensibilité : si spread k−g se réduit de moitié, la valeur double</span>'
+            f'<span class="guide-target tgt-yellow">{t("k_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
 
     with st.expander(t("horizon_expander"), expanded=False):
         st.markdown(
-            '<div class="guide-card purple">'
-            '<div class="guide-title">Horizon de projection explicite</div>'
-            '<div class="guide-body">'
-            'L\'horizon est la période pendant laquelle on projette les FCF année par année '
-            'avant d\'appliquer la valeur terminale. Un horizon trop court sous-estime '
-            'la valeur des entreprises en forte croissance. Un horizon trop long '
-            'accumule l\'incertitude de prévision.'
+            f'<div class="guide-card purple">'
+            f'<div class="guide-title">{t("horizon_html_title")}</div>'
+            f'<div class="guide-body">{t("horizon_html_body")}'
             '</div>'
             '</div>',
             unsafe_allow_html=True
         )
         st.markdown(
             '<div class="guide-card purple" style="border-radius:0 0 12px 12px;padding-top:10px;">'
-            '<div class="guide-body">'
-            '<strong>Recommandations selon le profil :</strong><br>'
-            '&nbsp;&nbsp;• <strong>5 ans</strong> : secteurs cycliques, entreprises difficiles à prévoir, '
-            'ou quand les données disponibles sont limitées<br>'
-            '&nbsp;&nbsp;• <strong>10 ans</strong> : standard — entreprises stables avec visibilité '
-            'raisonnable (recommandé par défaut)<br>'
-            '&nbsp;&nbsp;• <strong>15–20 ans</strong> : entreprises en forte croissance avec avantage '
-            'concurrentiel durable (LVMH, MSFT, Air Liquide)'
+            f'<div class="guide-body">{t("horizon_html_reco")}'
             '</div>'
-            '<div class="guide-body" style="margin-top:6px;color:#aaa;">'
-            '⚠️ <em>Au-delà de 10 ans, la précision des prévisions FCF diminue fortement. '
-            'Compenser en construisant plusieurs scénarios plutôt qu\'en allongeant l\'horizon.</em>'
+            f'<div class="guide-body" style="margin-top:6px;color:#aaa;"><em>{t("horizon_html_warning")}</em>'
             '</div>'
-            '<span class="guide-target tgt-green">🎯 Défaut recommandé : 10 ans pour la majorité des cas</span>'
+            f'<span class="guide-target tgt-green">{t("horizon_html_target")}</span>'
             '</div>',
             unsafe_allow_html=True
         )
@@ -5935,17 +5801,7 @@ elif current_page == t("page_explications"):
         '</div>',
         unsafe_allow_html=True
     )
-    st.markdown("""
-| Paramètre | Méthode | Effet d'une hausse | Fourchette typique |
-|---|---|---|---|
-| **WACC k** | DCF | 📉 Valeur **diminue** | 7–15% |
-| **g perpétuel** | DCF | 📈 Valeur **augmente fortement** | 1–3% |
-| **Horizon** | DCF | 📈 Valeur augmente légèrement | 5–15 ans |
-| **k Gordon** | Gordon-Shapiro | 📉 Valeur **diminue** | 5–12% |
-| **g dividende** | Gordon-Shapiro | 📈 Valeur **augmente fortement** | 0–8% |
-| **P/E moyen** | Multiples | 📈 Valeur **augmente** | Sectoriel |
-| **Book Value** | ANR | Neutre (données historiques) | — |
-""")
+    st.markdown(t("sensitivity_table_md"))
     st.caption(t("sensitivity_caption"))
 
 
