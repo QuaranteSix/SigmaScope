@@ -33,7 +33,7 @@ TRANSLATIONS = {
     # ── Page Présentation — Hero ─────────────────────────────
     "hero_tagline":         "La plateforme d'analyse boursière quantitative tout-en-un",
     "hero_tagline2":        "Régression log · Analyse fondamentale · Screener · Valorisation DCF",
-    "hero_version": "✨ Version 1.0 — par jp",
+    "hero_version": "✨ Version 1.0",
     "hero_pp_compat":       "🤝 Compatible avec",
     "hero_pp_desc":         "— import direct de votre compte-titres (fichier XML)",
 

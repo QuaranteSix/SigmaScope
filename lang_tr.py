@@ -33,7 +33,7 @@ TRANSLATIONS = {
     # ── Genel Bakış — Hero ───────────────────────────────────
     "hero_tagline":         "Hepsi bir arada kantitatif borsa analiz platformu",
     "hero_tagline2":        "Log regresyon · Temel analiz · Tarayıcı · DCF değerleme",
-    "hero_version": "✨ Sürüm 1.0 — jp tarafından",
+    "hero_version": "✨ Sürüm 1.0",
     "hero_pp_compat":       "🤝 Uyumlu:",
     "hero_pp_desc":         "— portföyünüzü doğrudan içe aktarın (XML dosyası)",
 
