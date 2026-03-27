@@ -2940,6 +2940,13 @@ with st.sidebar:
     )
     if _lang_choice != st.session_state.get("lang", "fr"):
         st.session_state.lang = _lang_choice
+        # Revenir à la page Présentation avec le bon label dans la nouvelle langue
+        _pages_map = {
+            "fr": "🏠 Présentation",
+            "en": "🏠 Overview",
+            "tr": "🏠 Genel Bakış",
+        }
+        st.session_state.page = _pages_map.get(_lang_choice, "🏠 Présentation")
         st.rerun()
 
     st.markdown("---")
