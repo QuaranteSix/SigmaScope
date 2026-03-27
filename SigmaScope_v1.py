@@ -697,7 +697,20 @@ st.markdown("""
         border-radius: 16px; padding: 40px 48px; margin-bottom: 28px;
         border: 1px solid #2a3a5a; text-align: center;
         box-shadow: 0 4px 32px rgba(76,155,232,0.12);
+        position: relative;
     }
+    .bmc-btn {
+        position: absolute; top: 16px; right: 16px;
+        display: inline-flex; align-items: center; gap: 7px;
+        background: #FFDD00; color: #000000 !important;
+        border-radius: 8px; padding: 7px 14px;
+        font-size: 0.82rem; font-weight: 700;
+        text-decoration: none !important;
+        box-shadow: 0 2px 8px rgba(255,221,0,0.35);
+        transition: transform 0.15s, box-shadow 0.15s;
+        white-space: nowrap;
+    }
+    .bmc-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,221,0,0.5); }
     .pres-hero h1 { font-size: 3rem; font-weight: 900; color: #ffffff; margin: 0 0 8px 0;
         background: linear-gradient(90deg,#4C9BE8,#7ad4f5,#FFD700); -webkit-background-clip:text;
         -webkit-text-fill-color:transparent; }
@@ -2980,6 +2993,9 @@ if current_page == t("page_presentation"):
     # ── Hero Banner ──────────────────────────────────────────
     st.markdown(
         '<div class="pres-hero">'
+        '<a class="bmc-btn" href="https://buymeacoffee.com/quarantesix" target="_blank">'
+        '☕ Buy me a coffee'
+        '</a>'
         '<div class="feat-icon" style="font-size:3.5rem;">📡</div>'
         '<h1>SigmaScope</h1>'
         f'<p class="tagline">{t("hero_tagline")}<br>{t("hero_tagline2")}</p>'
