@@ -3223,16 +3223,15 @@ if current_page == t("page_presentation"):
         stats_data   = get_usage_stats()
         ratings_data = get_ratings_stats()
 
-        sc1, sc2, sc3, sc4, sc5 = st.columns(5)
+        sc1, sc2, sc3, sc4 = st.columns(4)
         metrics = [
             ("👥", str(stats_data["distinct_users"]),  t("stats_users")),
             ("🔄", str(stats_data["nb_sessions"]),     t("stats_sessions")),
-            ("⏱️", f"{stats_data['avg_duration']} {t('min_suffix')}", t("stats_duration")),
             ("⭐", f"{ratings_data['avg_rating']}/5",  f"{ratings_data['nb_ratings']} {t('stats_rating')}"),
             ("🚀", f"{ratings_data['nb_saas_yes']} {t('stats_save_oui')} / {ratings_data['nb_saas_no']} {t('stats_save_non')}",
                    t("stats_saas_vote")),
         ]
-        for col, (icon, val, lbl) in zip([sc1, sc2, sc3, sc4, sc5], metrics):
+        for col, (icon, val, lbl) in zip([sc1, sc2, sc3, sc4], metrics):
             col.markdown(
                 f'<div class="stat-badge">'
                 f'<div style="font-size:1.4rem;">{icon}</div>'
@@ -6052,6 +6051,28 @@ elif current_page == t("page_configuration"):
                     )
             else:
                 st.caption(t("config_private_none"))
+
+        # ── Expander 4b : Réinitialisation des compteurs stats ──
+        with st.expander("🔄 Réinitialisation des statistiques", expanded=False):
+            st.caption(
+                "Supprime toutes les sessions enregistrées dans la base de données. "
+                "Les compteurs Utilisateurs uniques et Connexions reviendront à zéro. "
+                "⚠️ Opération irréversible — les avis et notations ne sont pas affectés."
+            )
+            col_rst1, col_rst2 = st.columns([2, 3])
+            with col_rst1:
+                if st.button(
+                    "🔄 Réinitialiser les compteurs",
+                    type="primary",
+                    help="Vide la table usage_sessions — irréversible"
+                ):
+                    try:
+                        # Supprime toutes les sessions
+                        supabase.table("usage_sessions").delete().neq("user_id", "__never__").execute()
+                        st.success("✅ Compteurs réinitialisés — Sessions supprimées.")
+                        st.rerun()
+                    except Exception as _e:
+                        st.error(f"❌ Erreur : {_e}")
 
         # ── Expander 4 : Nettoyage watchlists inactives ───────
         with st.expander(t("config_purge_expander"), expanded=False):
