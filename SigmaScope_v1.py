@@ -2375,7 +2375,7 @@ def render_company_info(ticker, info):
         if ex_div_date:
             try:
                 if isinstance(ex_div_date, (int, float)):
-                    ex_div_str = datetime.utcfromtimestamp(ex_div_date).strftime("%d/%m/%Y")
+                    ex_div_str = datetime.fromtimestamp(ex_div_date, tz=timezone.utc).strftime("%d/%m/%Y")
                 else:
                     ex_div_str = pd.Timestamp(ex_div_date).strftime("%d/%m/%Y")
             except:
