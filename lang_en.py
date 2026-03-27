@@ -11,7 +11,7 @@ TRANSLATIONS = {
     "lang_tr": "🇹🇷 Türkçe",
 
     # ── Sidebar ──────────────────────────────────────────────
-    "sidebar_title":        "🚀 SigmaScope by jp",
+    "sidebar_title":        "🚀 SigmaScope",
     "sidebar_nav":          "### 🗂️ Navigation",
     "sidebar_indices":      "**📂 Loaded indices**",
     "sidebar_no_index":     "⚠️ No index loaded.\nGo to ⚙️ Configuration.",
@@ -33,7 +33,7 @@ TRANSLATIONS = {
     # ── Page Overview — Hero ─────────────────────────────────
     "hero_tagline":         "The all-in-one quantitative stock analysis platform",
     "hero_tagline2":        "Log regression · Fundamental analysis · Screener · DCF valuation",
-    "hero_version":         "✨ Version 24 — by jp",
+    "hero_version": "✨ Version 1.0 — by jp",
     "hero_pp_compat":       "🤝 Compatible with",
     "hero_pp_desc":         "— direct import of your portfolio (XML file)",
 
