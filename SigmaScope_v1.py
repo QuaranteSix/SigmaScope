@@ -1285,7 +1285,7 @@ def dialog_import_portfolio():
 
         if step == 1:  # toujours étape 1 (pas encore de fichier valide)
             st.info(t("pp_upload_info"))
-            if st.button("❌ Fermer", use_container_width=True, key="import_cancel_1"):
+            if st.button("❌ Fermer", width='stretch', key="import_cancel_1"):
                 st.session_state.import_step         = 1
                 st.session_state.import_parsed       = None
                 st.session_state.import_last_file_id = None
@@ -1319,7 +1319,7 @@ def dialog_import_portfolio():
                 })
             st.dataframe(
                 pd.DataFrame(preview_rows),
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
                 height=min(38 * len(preview_rows) + 38, 340),
             )
@@ -1328,11 +1328,11 @@ def dialog_import_portfolio():
 
         c1, c2, c3 = st.columns([2, 1, 1])
         with c1:
-            next2 = st.button("▶️ Suivant", type="primary", use_container_width=True, key="import_next_2")
+            next2 = st.button("▶️ Suivant", type="primary", width='stretch', key="import_next_2")
         with c2:
-            back2 = st.button("◀️ Retour",  use_container_width=True, key="import_back_2")
+            back2 = st.button("◀️ Retour",  width='stretch', key="import_back_2")
         with c3:
-            cancel2 = st.button("❌ Annuler", use_container_width=True, key="import_cancel_2")
+            cancel2 = st.button("❌ Annuler", width='stretch', key="import_cancel_2")
 
         if next2:
             st.session_state.import_selected_port = selected_port
@@ -1373,11 +1373,11 @@ def dialog_import_portfolio():
 
         c1, c2, c3 = st.columns([2, 1, 1])
         with c1:
-            confirm3 = st.button("📥 Importer", type="primary", use_container_width=True, key="import_confirm_3")
+            confirm3 = st.button("📥 Importer", type="primary", width='stretch', key="import_confirm_3")
         with c2:
-            back3 = st.button("◀️ Retour",  use_container_width=True, key="import_back_3")
+            back3 = st.button("◀️ Retour",  width='stretch', key="import_back_3")
         with c3:
-            cancel3 = st.button("❌ Annuler", use_container_width=True, key="import_cancel_3")
+            cancel3 = st.button("❌ Annuler", width='stretch', key="import_cancel_3")
 
         if confirm3:
             name = wl_name.strip()
@@ -1477,7 +1477,7 @@ def watchlist_button(ticker, company="", key_suffix=""):
     label  = "✅ Watchlist" if in_wl else "⭐ Watchlist"
     if st.button(label, key=f"wl_btn_{ticker}_{key_suffix}",
                  help=t("wl_btn_remove_help" if in_wl else "wl_btn_add_help", name=active_wl),
-                 use_container_width=False):
+                 width='content'):
         if in_wl:
             remove_from_watchlist(ticker, name=active_wl)
             st.toast(t("wl_toast_removed", ticker=ticker), icon="🗑️")
@@ -1537,14 +1537,14 @@ def dialog_confirm_wl_add():
 
         col_ok, col_cancel = st.columns(2)
         with col_ok:
-            if st.button(t("wl_dialog_add_btn"), use_container_width=True, type="primary", disabled=already):
+            if st.button(t("wl_dialog_add_btn"), width='stretch', type="primary", disabled=already):
                 st.session_state.active_watchlist = chosen
                 add_to_watchlist(tkr, company, name=chosen)
                 st.session_state.wl_pending_action = None
                 st.toast(t("wl_toast_added", ticker=tkr, name=chosen), icon="✅")
                 st.rerun()
         with col_cancel:
-            if st.button("❌ Annuler", use_container_width=True):
+            if st.button("❌ Annuler", width='stretch'):
                 st.session_state.wl_pending_action = None
                 st.rerun()
 
@@ -1552,13 +1552,13 @@ def dialog_confirm_wl_add():
         st.markdown(f"**Retirer `{tkr}`** de la watchlist **{st.session_state.active_watchlist}** ?")
         col_ok, col_cancel = st.columns(2)
         with col_ok:
-            if st.button(t("wl_dialog_remove_btn"), use_container_width=True, type="primary"):
+            if st.button(t("wl_dialog_remove_btn"), width='stretch', type="primary"):
                 remove_from_watchlist(tkr, name=st.session_state.active_watchlist)
                 st.session_state.wl_pending_action = None
                 st.toast(f"❌ {tkr} retiré de la watchlist", icon="🗑️")
                 st.rerun()
         with col_cancel:
-            if st.button("❌ Annuler", use_container_width=True):
+            if st.button("❌ Annuler", width='stretch'):
                 st.session_state.wl_pending_action = None
                 st.rerun()
 
@@ -2683,7 +2683,7 @@ def render_historical_charts(f, ticker):
                     name=t("chart_trend_ca"), x=[r[0] for r in valid_rev], y=[r[1] for r in valid_rev],
                     mode="lines+markers", line=dict(color="#FFD700", width=2, dash="dot"),
                 ))
-            st.plotly_chart(fig_rev, use_container_width=True)
+            st.plotly_chart(fig_rev, width='stretch')
 
         with g_col2:
             # Croissance CA YoY
@@ -2719,7 +2719,7 @@ def render_historical_charts(f, ticker):
                 overlay_values=cagr_fcf_yoy, overlay_name="Croiss. FCF %",
                 overlay_color="#4CE87A", height=280
             )
-            st.plotly_chart(fig_growth, use_container_width=True)
+            st.plotly_chart(fig_growth, width='stretch')
 
     # ═══════════════════════════════════════════════════════════
     # SECTION 2 — RENTABILITÉ
@@ -2741,7 +2741,7 @@ def render_historical_charts(f, ticker):
                     "🔁 ROIC", f.get("roic"), "%",
                     target_line=15, target_label="Obj 15%", color_fn=col_roic, height=260
                 )
-            st.plotly_chart(fig_roic, use_container_width=True)
+            st.plotly_chart(fig_roic, width='stretch')
 
         with r_col2:
             if hist_roe:
@@ -2757,7 +2757,7 @@ def render_historical_charts(f, ticker):
                     "💹 ROE", f.get("roe"), "%",
                     target_line=15, target_label="Obj 15%", color_fn=col_roic, height=260
                 )
-            st.plotly_chart(fig_roe, use_container_width=True)
+            st.plotly_chart(fig_roe, width='stretch')
 
         with r_col3:
             fig_marge = _bar_series(
@@ -2766,7 +2766,7 @@ def render_historical_charts(f, ticker):
                 color_fn=col_marge,
                 target_line=10, target_label="Obj 10%", height=260
             )
-            st.plotly_chart(fig_marge, use_container_width=True)
+            st.plotly_chart(fig_marge, width='stretch')
 
     # ═══════════════════════════════════════════════════════════
     # SECTION 3 — VALORISATION
@@ -2779,28 +2779,28 @@ def render_historical_charts(f, ticker):
                 "📊 P/E Ratio", f.get("pe_ratio"), "x",
                 color_fn=col_pe, height=240
             )
-            st.plotly_chart(fig_pe, use_container_width=True)
+            st.plotly_chart(fig_pe, width='stretch')
 
         with v_col2:
             fig_peg = _bar_single(
                 "📊 PEG Ratio", f.get("peg"), "",
                 target_line=2, target_label="Max 2", color_fn=col_peg, height=240
             )
-            st.plotly_chart(fig_peg, use_container_width=True)
+            st.plotly_chart(fig_peg, width='stretch')
 
         with v_col3:
             fig_pb = _bar_single(
                 "📚 Price/Book", f.get("pb"), "x",
                 target_line=5, target_label="Max 5", color_fn=col_pb, height=240
             )
-            st.plotly_chart(fig_pb, use_container_width=True)
+            st.plotly_chart(fig_pb, width='stretch')
 
         with v_col4:
             fig_pfcf = _bar_single(
                 "💧 Price/FCF", f.get("pfcf"), "x",
                 target_line=25, target_label="Max 25", color_fn=col_pfcf, height=240
             )
-            st.plotly_chart(fig_pfcf, use_container_width=True)
+            st.plotly_chart(fig_pfcf, width='stretch')
 
     # ═══════════════════════════════════════════════════════════
     # SECTION 4 — SOLIDITÉ FINANCIÈRE
@@ -2822,7 +2822,7 @@ def render_historical_charts(f, ticker):
                     "🏦 Dette / FCF", f.get("debt_fcf"), "",
                     target_line=3, target_label="Max 3", color_fn=col_debt, height=260
                 )
-            st.plotly_chart(fig_debt, use_container_width=True)
+            st.plotly_chart(fig_debt, width='stretch')
 
         with s_col2:
             # Waterfall CA → FCF → Marge pour la dernière année disponible
@@ -2851,7 +2851,7 @@ def render_historical_charts(f, ticker):
                     yaxis=dict(showgrid=True, gridcolor="#333"),
                     xaxis=dict(type="category"), showlegend=False, barmode="group",
                 )
-                st.plotly_chart(fig_wf, use_container_width=True)
+                st.plotly_chart(fig_wf, width='stretch')
             else:
                 st.caption(t("hist_no_synthesis"))
 
@@ -2964,7 +2964,7 @@ with st.sidebar:
     ]
 
     for p in pages:
-        if st.button(p, key=f"nav_{p}", use_container_width=True):
+        if st.button(p, key=f"nav_{p}", width='stretch'):
             st.session_state.page = p
 
     st.markdown("---")
@@ -2979,7 +2979,7 @@ with st.sidebar:
         st.caption(t("sidebar_no_index"))
 
     st.markdown("---")
-    if st.button(t("sidebar_stop"), use_container_width=True, key="btn_stop",
+    if st.button(t("sidebar_stop"), width='stretch', key="btn_stop",
                  help=t("sidebar_stop_help")):
         st.warning(t("sidebar_stopping"))
         import os as _os
@@ -3065,7 +3065,7 @@ if current_page == t("page_presentation"):
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button(t("feat_open_analyse"), key="btn_feat1", use_container_width=True):
+        if st.button(t("feat_open_analyse"), key="btn_feat1", width='stretch'):
             st.session_state.page = t("page_analyse")
             st.rerun()
 
@@ -3083,7 +3083,7 @@ if current_page == t("page_presentation"):
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button(t("feat_open_watchlist"), key="btn_feat2", use_container_width=True):
+        if st.button(t("feat_open_watchlist"), key="btn_feat2", width='stretch'):
             st.session_state.page = t("page_watchlists")
             st.rerun()
 
@@ -3100,7 +3100,7 @@ if current_page == t("page_presentation"):
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button(t("feat_open_comparaison"), key="btn_feat3", use_container_width=True):
+        if st.button(t("feat_open_comparaison"), key="btn_feat3", width='stretch'):
             st.session_state.page = t("page_comparaison")
             st.rerun()
 
@@ -3120,7 +3120,7 @@ if current_page == t("page_presentation"):
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button(t("feat_open_screener_s"), key="btn_feat4", use_container_width=True):
+        if st.button(t("feat_open_screener_s"), key="btn_feat4", width='stretch'):
             st.session_state.page = t("page_screener_sigma")
             st.rerun()
 
@@ -3137,7 +3137,7 @@ if current_page == t("page_presentation"):
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button(t("feat_open_screener_m"), key="btn_feat5", use_container_width=True):
+        if st.button(t("feat_open_screener_m"), key="btn_feat5", width='stretch'):
             st.session_state.page = t("page_screener_multi")
             st.rerun()
 
@@ -3155,7 +3155,7 @@ if current_page == t("page_presentation"):
             '</div>',
             unsafe_allow_html=True
         )
-        if st.button(t("feat_open_valorisation"), key="btn_feat6", use_container_width=True):
+        if st.button(t("feat_open_valorisation"), key="btn_feat6", width='stretch'):
             st.session_state.page = t("page_analyse")
             st.rerun()
 
@@ -3485,7 +3485,7 @@ if current_page == t("page_analyse"):
 
         with col_btn:
             st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
-            btn_analyser = st.button(t("analyse_launch_btn"), type="primary", use_container_width=True)
+            btn_analyser = st.button(t("analyse_launch_btn"), type="primary", width='stretch')
 
         with col_info:
             # Résolution : le dernier widget modifié gagne (tracé via _ticker_source)
@@ -3663,7 +3663,7 @@ if current_page == t("page_analyse"):
                         annotation_position="top left",
                         annotation_font=dict(color="#4C9BE8", size=11),
                     )
-            st.plotly_chart(fig_reg, use_container_width=True)
+            st.plotly_chart(fig_reg, width='stretch')
 
         sigma_pos = res["sigma_pos"]
         zone_label = next(
@@ -3932,7 +3932,7 @@ if current_page == t("page_analyse"):
                         fig_tc.update_yaxes(
                             showgrid=True, gridcolor="#1e2e3e", zeroline=False,
                         )
-                        st.plotly_chart(fig_tc, use_container_width=True)
+                        st.plotly_chart(fig_tc, width='stretch')
 
                 except Exception as _e:
                     st.error(t("tc_chart_err", e=_e))
@@ -4206,7 +4206,7 @@ if current_page == t("page_analyse"):
                         xaxis=dict(showgrid=False),
                         yaxis=dict(showgrid=True, gridcolor="#333", title="Prix"),
                     )
-                    st.plotly_chart(fig_fv, use_container_width=True)
+                    st.plotly_chart(fig_fv, width='stretch')
 
                     # Légende méthode
                     method_tips = {
@@ -4264,14 +4264,14 @@ elif current_page == t("page_watchlists"):
                 st.session_state.active_watchlist = selected_wl
                 st.rerun()
         with wl_hdr_col2:
-            if st.button(t("wl_new_btn"), use_container_width=True, key="wl_new_list_btn"):
+            if st.button(t("wl_new_btn"), width='stretch', key="wl_new_list_btn"):
                 st.session_state["wl_show_create"] = True
         with wl_hdr_col3:
-            if st.button(t("wl_delete_btn"), use_container_width=True, key="wl_del_list_btn",
+            if st.button(t("wl_delete_btn"), width='stretch', key="wl_del_list_btn",
                          help=f"Supprimer la watchlist '{st.session_state.active_watchlist}'"):
                 st.session_state["wl_show_delete"] = True
         with wl_hdr_col4:
-            if st.button(t("wl_import_btn"), use_container_width=True, key="wl_import_btn",
+            if st.button(t("wl_import_btn"), width='stretch', key="wl_import_btn",
                          help="Importer un compte titre depuis Portfolio Performance (.xml)"):
                 st.session_state.import_step   = 1
                 st.session_state.import_parsed = None
@@ -4283,9 +4283,9 @@ elif current_page == t("page_watchlists"):
                 new_wl_name = st.text_input("Nom de la nouvelle watchlist", placeholder="ex : Tech USA, Dividendes…")
                 c1, c2 = st.columns(2)
                 with c1:
-                    submitted = st.form_submit_button("✅ Créer", use_container_width=True)
+                    submitted = st.form_submit_button("✅ Créer", width='stretch')
                 with c2:
-                    cancelled = st.form_submit_button("❌ Annuler", use_container_width=True)
+                    cancelled = st.form_submit_button("❌ Annuler", width='stretch')
                 if submitted and new_wl_name.strip():
                     create_watchlist(new_wl_name.strip())
                     st.session_state.active_watchlist = new_wl_name.strip()
@@ -4300,7 +4300,7 @@ elif current_page == t("page_watchlists"):
             st.warning(t("wl_delete_confirm_warn", name=wl_to_del))
             d1, d2 = st.columns(2)
             with d1:
-                if st.button("🗑️ Confirmer la suppression", use_container_width=True, key="wl_del_confirm"):
+                if st.button("🗑️ Confirmer la suppression", width='stretch', key="wl_del_confirm"):
                     remaining = delete_watchlist(wl_to_del)
                     if not remaining:
                         create_watchlist("Ma Watchlist")
@@ -4309,7 +4309,7 @@ elif current_page == t("page_watchlists"):
                     st.session_state["wl_show_delete"] = False
                     st.rerun()
             with d2:
-                if st.button("❌ Annuler", use_container_width=True, key="wl_del_cancel"):
+                if st.button("❌ Annuler", width='stretch', key="wl_del_cancel"):
                     st.session_state["wl_show_delete"] = False
                     st.rerun()
 
@@ -4326,7 +4326,7 @@ elif current_page == t("page_watchlists"):
             new_company = st.text_input("Nom (optionnel)", placeholder="ex : Apple Inc.", key="wl_new_company").strip()
         with wl_add_col3:
             st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-            if st.button(t("wl_add_btn"), type="primary", use_container_width=True, key="wl_add_btn"):
+            if st.button(t("wl_add_btn"), type="primary", width='stretch', key="wl_add_btn"):
                 if new_ticker:
                     # Tentative de récupération auto du nom si vide
                     company_to_add = new_company
@@ -4356,7 +4356,7 @@ elif current_page == t("page_watchlists"):
         ctrl1, ctrl2, ctrl3 = st.columns([2, 2, 4])
         with ctrl1:
             st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
-            refresh_wl = st.button(t("wl_refresh_btn"), use_container_width=True,
+            refresh_wl = st.button(t("wl_refresh_btn"), width='stretch',
                                    help="Vide le cache et recharge :\n"
                                         "• Cours live et variation journalière\n"
                                         "• Score fondamental, ROIC, Marge FCF\n"
@@ -4594,7 +4594,7 @@ elif current_page == t("page_watchlists"):
             df_chk = df_display[["📈"]].copy()
             edited_main = st.data_editor(
                 df_chk,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
                 key="wl_main_editor",
                 height=TABLE_HEIGHT,
@@ -4613,7 +4613,7 @@ elif current_page == t("page_watchlists"):
         with col_tbl:
             st.dataframe(
                 styled,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
                 height=TABLE_HEIGHT,
                 column_config={
@@ -4670,7 +4670,7 @@ elif current_page == t("page_watchlists"):
                     yaxis=dict(title="σ", zeroline=True),
                     xaxis=dict(title=""),
                 )
-                st.plotly_chart(fig_wl, use_container_width=True)
+                st.plotly_chart(fig_wl, width='stretch')
             else:
                 st.caption(t("wl_sigma_no_data"))
 
@@ -4709,7 +4709,7 @@ elif current_page == t("page_watchlists"):
                     yaxis=dict(title="%", zeroline=True, ticksuffix="%"),
                     xaxis=dict(title=""),
                 )
-                st.plotly_chart(fig_pru, use_container_width=True)
+                st.plotly_chart(fig_pru, width='stretch')
             else:
                 st.caption(t("wl_pru_no_data"))
 
@@ -4737,7 +4737,7 @@ elif current_page == t("page_watchlists"):
             st.caption(t("wl_remove_tip"))
             edited_wl = st.data_editor(
                 df_wl_editor,
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
                 key="wl_mgmt_editor",
                 column_order=["🗑️ Retirer", "Ticker", "Société"],
@@ -4768,7 +4768,7 @@ elif current_page == t("page_watchlists"):
                 with note_col2:
                     edit_note  = st.text_input("Note personnelle", key="wl_edit_note",  placeholder="ex : Position longue")
                     edit_price = st.text_input("Prix d'achat",     key="wl_edit_price", placeholder="ex : 178.50")
-                    if st.button("💾 Enregistrer", key="wl_edit_btn", use_container_width=True):
+                    if st.button("💾 Enregistrer", key="wl_edit_btn", width='stretch'):
                         if ticker_to_edit != t("wl_choose_dash"):
                             ticker_raw = ticker_to_edit.split(" — ")[0].strip()
                             df_edit = load_watchlist(st.session_state.active_watchlist)
@@ -4844,7 +4844,7 @@ elif current_page == t("page_comparaison"):
 
         with row2_col2:
             st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
-            btn_compare = st.button(t("comp_btn"), use_container_width=True)
+            btn_compare = st.button(t("comp_btn"), width='stretch')
 
     st.divider()
 
@@ -4912,7 +4912,7 @@ elif current_page == t("page_comparaison"):
             hovermode="x unified", legend=dict(orientation="v", x=1.02, y=1),
             height=480, margin=dict(l=50,r=120,t=50,b=50), template="plotly_dark",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         st.subheader(t("comp_table_subtitle"))
         k1, k2, _ = st.columns([1,1,4])
@@ -4944,7 +4944,7 @@ elif current_page == t("page_comparaison"):
         st.caption(t("comp_tip_caption"))
         edited_comp = st.data_editor(
             df_comp_editor,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             key="comp_editor",
             column_config={
@@ -5090,7 +5090,7 @@ elif current_page == t("page_screener_sigma"):
         st.caption(t("screener_sigma_tip"))
         edited_sig = st.data_editor(
             df_sig_editor,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             key="sig_editor",
             column_config={
@@ -5176,7 +5176,7 @@ elif current_page == t("page_screener_sigma"):
                         annotation_position="top left",
                         annotation_font=dict(color="#4C9BE8", size=11),
                     )
-            st.plotly_chart(_fig_sig, use_container_width=True)
+            st.plotly_chart(_fig_sig, width='stretch')
     else:
         if not btn_scan:
             st.info(t("screener_sigma_select_zone") if not selected_criteria else t("screener_sigma_click_to_start"))
@@ -5230,10 +5230,10 @@ elif current_page == t("page_screener_multi"):
 
             st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
             btn_screener = st.button("🚀 Lancer le screener", type="primary",
-                                     use_container_width=True,
+                                     width='stretch',
                                      disabled=(scr_index_key is None))
             if st.button("↺ Réinitialiser les filtres", key="scr_reset",
-                         use_container_width=True,
+                         width='stretch',
                          help=t("screener_multi_reset_help")):
                 for k, v in [("f_rev", 5), ("f_roic", 10), ("f_fcfm", 5),
                               ("f_debt", 5), ("f_score", 5.0)]:
@@ -5364,7 +5364,7 @@ elif current_page == t("page_screener_multi"):
         st.caption(t("screener_sigma_tip"))
         edited_scr = st.data_editor(
             df_scr_editor,
-            use_container_width=True,
+            width='stretch',
             hide_index=True,
             key="scr_editor",
             column_config={
@@ -5432,7 +5432,7 @@ elif current_page == t("page_screener_multi"):
                     yaxis_type=st.session_state.chart_yaxis_type,
                     display_mode=st.session_state.chart_display_mode,
                 ),
-                use_container_width=True
+                width='stretch'
             )
     else:
         if not btn_screener:
@@ -5950,7 +5950,7 @@ elif current_page == t("page_configuration"):
         preview_key   = all_preview_keys[all_preview_options.index(preview_label)]
         if preview_key:
             df_preview = all_data[preview_key].reset_index(drop=True)
-            st.dataframe(df_preview, use_container_width=True, hide_index=True, height=400)
+            st.dataframe(df_preview, width='stretch', hide_index=True, height=400)
     else:
         st.info(t("config_no_index"))
 
