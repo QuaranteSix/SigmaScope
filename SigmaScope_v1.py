@@ -274,6 +274,62 @@ def is_in_watchlist(ticker: str, name: str = None, user_id: str = None) -> bool:
            .eq("watchlist_id", wl_id).eq("ticker", ticker).execute())
     return bool(res.data)
 
+def load_all_pp_watchlists_admin() -> list:
+    """
+    [ADMIN ONLY] Charge toutes les watchlists importées depuis Portfolio Performance
+    de tous les utilisateurs. Identifie les watchlists PP grâce à la note 'ISIN:...'
+    présente dans les items importés via parse_portfolio_performance_xml().
+    Retourne une liste de dicts :
+      { user_id, wl_name, wl_id, created_at, last_seen, nb_tickers, tickers }
+    """
+    try:
+        # Récupérer toutes les watchlists
+        res_wl = supabase.table("watchlists") \
+            .select("id, user_id, name, created_at, last_seen") \
+            .order("created_at", desc=True).execute()
+        if not res_wl.data:
+            return []
+
+        result = []
+        for wl in res_wl.data:
+            wl_id = wl["id"]
+            # Récupérer les items de cette watchlist
+            res_items = supabase.table("watchlist_items") \
+                .select("ticker, company, note, prix_achat") \
+                .eq("watchlist_id", wl_id).execute()
+            items = res_items.data or []
+            if not items:
+                continue
+            # Détecter si importée depuis PP : au moins un item avec note ISIN:...
+            is_pp = any(
+                str(item.get("note", "")).startswith("ISIN:")
+                for item in items
+            )
+            if not is_pp:
+                continue
+            # Construire la liste de tickers avec PRU
+            tickers_info = []
+            for item in items:
+                tickers_info.append({
+                    "ticker":     item.get("ticker", ""),
+                    "company":    item.get("company", ""),
+                    "isin":       str(item.get("note", "")).replace("ISIN:", ""),
+                    "pru":        item.get("prix_achat", ""),
+                })
+            result.append({
+                "user_id":    wl["user_id"],
+                "wl_name":    wl["name"],
+                "wl_id":      wl_id,
+                "created_at": wl.get("created_at", ""),
+                "last_seen":  wl.get("last_seen", ""),
+                "nb_tickers": len(tickers_info),
+                "tickers":    tickers_info,
+            })
+        return result
+    except Exception as e:
+        return []
+
+
 def get_pru(ticker: str, user_id: str = None):
     if user_id is None:
         user_id = get_user_id()
@@ -6115,3 +6171,106 @@ elif current_page == t("page_configuration"):
                         st.rerun()
                     else:
                         st.info(t("config_purge_none"))
+
+        # ── Expander 5 : Toutes les watchlists PP (tous utilisateurs) ──
+        with st.expander("📥 Watchlists Portfolio Performance — Tous les utilisateurs", expanded=False):
+            st.caption(
+                "Affiche toutes les watchlists importées depuis Portfolio Performance "
+                "par l'ensemble des utilisateurs. Identifiées via la note ISIN: "
+                "inscrite lors de l'import."
+            )
+
+            _col_btn_pp, _ = st.columns([2, 3])
+            with _col_btn_pp:
+                _btn_load_pp = st.button(
+                    "🔍 Charger les watchlists PP",
+                    type="primary",
+                    key="admin_btn_load_pp_wl",
+                    width='stretch',
+                    help="Interroge la base de données pour lister toutes les watchlists importées depuis Portfolio Performance.",
+                )
+            if _btn_load_pp:
+                st.session_state["_admin_pp_wl_data"] = load_all_pp_watchlists_admin()
+                st.session_state["_admin_pp_wl_loaded"] = True
+
+            _pp_wl_data = st.session_state.get("_admin_pp_wl_data", None)
+            _pp_wl_loaded = st.session_state.get("_admin_pp_wl_loaded", False)
+
+            if _pp_wl_loaded:
+                if not _pp_wl_data:
+                    st.info("ℹ️ Aucune watchlist importée depuis Portfolio Performance trouvée.")
+                else:
+                    st.success(f"✅ **{len(_pp_wl_data)} watchlist(s) PP** trouvée(s) sur l'ensemble des utilisateurs.")
+
+                    # Sélecteur utilisateur / watchlist
+                    _pp_wl_options = [
+                        f"[{w['user_id'][:8]}…] {w['wl_name']} ({w['nb_tickers']} titres)"
+                        for w in _pp_wl_data
+                    ]
+                    _pp_selected_idx = st.selectbox(
+                        "Sélectionner une watchlist à visualiser",
+                        options=range(len(_pp_wl_options)),
+                        format_func=lambda i: _pp_wl_options[i],
+                        key="admin_pp_wl_select",
+                        label_visibility="collapsed",
+                    )
+
+                    # Résumé tableau global
+                    _summary_rows = []
+                    for w in _pp_wl_data:
+                        try:
+                            _dt_created = datetime.fromisoformat(
+                                w["created_at"].replace("Z", "+00:00")
+                            ).strftime("%d/%m/%Y") if w["created_at"] else "—"
+                            _dt_seen = datetime.fromisoformat(
+                                w["last_seen"].replace("Z", "+00:00")
+                            ).strftime("%d/%m/%Y %H:%M") if w["last_seen"] else "—"
+                        except Exception:
+                            _dt_created = _dt_seen = "—"
+                        _summary_rows.append({
+                            "Utilisateur":  w["user_id"][:12] + "…",
+                            "Watchlist":    w["wl_name"],
+                            "Nb titres":    w["nb_tickers"],
+                            "Créée le":     _dt_created,
+                            "Vu le":        _dt_seen,
+                        })
+                    st.dataframe(
+                        pd.DataFrame(_summary_rows),
+                        width='stretch',
+                        hide_index=True,
+                        height=min(38 * len(_summary_rows) + 38, 300),
+                    )
+
+                    st.markdown("---")
+                    # Détail de la watchlist sélectionnée
+                    _sel = _pp_wl_data[_pp_selected_idx]
+                    st.markdown(
+                        f'<div style="background:#0d1f30;border-radius:8px;padding:10px 16px;'
+                        f'margin-bottom:10px;border-left:4px solid #FFD700;">'
+                        f'<span style="color:#FFD700;font-weight:700;font-size:0.95rem;">'
+                        f'📋 {_sel["wl_name"]}</span>'
+                        f'<span style="color:#888;font-size:0.8rem;margin-left:14px;">'
+                        f'Utilisateur : {_sel["user_id"][:16]}…'
+                        f'</span><br>'
+                        f'<span style="color:#aaa;font-size:0.78rem;">'
+                        f'{_sel["nb_tickers"]} position(s) importée(s) depuis Portfolio Performance'
+                        f'</span>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
+                    _detail_rows = []
+                    for tkr_info in _sel["tickers"]:
+                        _detail_rows.append({
+                            "Ticker":   tkr_info["ticker"],
+                            "Société":  tkr_info["company"] or "—",
+                            "ISIN":     tkr_info["isin"] or "—",
+                            "PRU (€)":  tkr_info["pru"] or "—",
+                        })
+                    if _detail_rows:
+                        st.dataframe(
+                            pd.DataFrame(_detail_rows),
+                            width='stretch',
+                            hide_index=True,
+                            height=min(38 * len(_detail_rows) + 38, 500),
+                        )
