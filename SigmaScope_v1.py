@@ -2979,11 +2979,11 @@ with st.sidebar:
         st.caption(t("sidebar_no_index"))
 
     st.markdown("---")
-    if st.button(t("sidebar_stop"), width='stretch', key="btn_stop",
-                 help=t("sidebar_stop_help")):
-        st.warning(t("sidebar_stopping"))
-        import os as _os
-        _os._exit(0)
+    #if st.button(t("sidebar_stop"), width='stretch', key="btn_stop",
+    #             help=t("sidebar_stop_help")):
+    #   st.warning(t("sidebar_stopping"))
+    #   import os as _os
+    #   _os._exit(0)
 
 
 # ============================================================
