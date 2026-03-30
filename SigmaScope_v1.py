@@ -170,12 +170,16 @@ def save_wl_index(names, user_id: str = None):
         if name not in existing:
             create_watchlist(name, user_id=user_id)
 
-def create_watchlist(name: str, user_id: str = None):
+def create_watchlist(name: str, user_id: str = None, source: str = "manual"):
     if user_id is None:
         user_id = get_user_id()
     existing = load_wl_index(user_id=user_id, _creating=True)
     if name not in existing:
-        supabase.table("watchlists").insert({"user_id": user_id, "name": name}).execute()
+        supabase.table("watchlists").insert({
+            "user_id": user_id,
+            "name":    name,
+            "source":  source,
+        }).execute()
         existing.append(name)
     return existing
 
@@ -277,15 +281,15 @@ def is_in_watchlist(ticker: str, name: str = None, user_id: str = None) -> bool:
 def load_all_pp_watchlists_admin() -> list:
     """
     [ADMIN ONLY] Charge toutes les watchlists importées depuis Portfolio Performance
-    de tous les utilisateurs. Identifie les watchlists PP grâce à la note 'ISIN:...'
-    présente dans les items importés via parse_portfolio_performance_xml().
+    de tous les utilisateurs. Filtre sur source = 'portfolio_performance'.
     Retourne une liste de dicts :
       { user_id, wl_name, wl_id, created_at, last_seen, nb_tickers, tickers }
     """
     try:
-        # Récupérer toutes les watchlists
+        # Récupérer uniquement les watchlists PP
         res_wl = supabase.table("watchlists") \
-            .select("id, user_id, name, created_at, last_seen") \
+            .select("id, user_id, name, created_at, last_seen, source") \
+            .eq("source", "portfolio_performance") \
             .order("created_at", desc=True).execute()
         if not res_wl.data:
             return []
@@ -293,28 +297,20 @@ def load_all_pp_watchlists_admin() -> list:
         result = []
         for wl in res_wl.data:
             wl_id = wl["id"]
-            # Récupérer les items de cette watchlist
             res_items = supabase.table("watchlist_items") \
                 .select("ticker, company, note, prix_achat") \
                 .eq("watchlist_id", wl_id).execute()
             items = res_items.data or []
-            if not items:
-                continue
-            # Détecter si importée depuis PP : au moins un item avec note ISIN:...
-            is_pp = any(
-                str(item.get("note", "")).startswith("ISIN:")
-                for item in items
-            )
-            if not is_pp:
-                continue
-            # Construire la liste de tickers avec PRU
             tickers_info = []
             for item in items:
+                # Extraire l'ISIN depuis la note si présent (optionnel)
+                isin_val = str(item.get("note", "")).replace("ISIN:", "") \
+                    if str(item.get("note", "")).startswith("ISIN:") else ""
                 tickers_info.append({
-                    "ticker":     item.get("ticker", ""),
-                    "company":    item.get("company", ""),
-                    "isin":       str(item.get("note", "")).replace("ISIN:", ""),
-                    "pru":        item.get("prix_achat", ""),
+                    "ticker":  item.get("ticker", ""),
+                    "company": item.get("company", ""),
+                    "isin":    isin_val,
+                    "pru":     item.get("prix_achat", ""),
                 })
             result.append({
                 "user_id":    wl["user_id"],
@@ -326,7 +322,7 @@ def load_all_pp_watchlists_admin() -> list:
                 "tickers":    tickers_info,
             })
         return result
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -1441,7 +1437,7 @@ def dialog_import_portfolio():
                 st.error(t("pp_name_empty"))
             else:
                 if name not in existing:
-                    create_watchlist(name)
+                    create_watchlist(name, source="portfolio_performance")
                 rows = []
                 for h in holdings:
                     # PRU conservé en EUR tel quel (devise Portfolio Performance)
